@@ -1,0 +1,45 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(495,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(496,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  VkBootstrap.cpp
+  VulkanToolbox.cpp
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1091,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1089,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1103,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1101,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(107,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(122,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanMemoryManager.hpp(160,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanMemoryManager.hpp(424,86): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanMemoryManager.hpp(535,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(59,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(66,1): warning C4267: 'return': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(164,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(165,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(181,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanRenderpassManager.hpp(70,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanRenderpassManager.hpp(81,1): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanRenderpassManager.hpp(119,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanRenderpassManager.hpp(125,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanRenderpassManager.hpp(138,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(96,1): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(103,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(111,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(150,1): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(157,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanPipelineManagers.hpp(165,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data (compiling source file VulkanToolbox.cpp)
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(161,121): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(154,71): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(154,43): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(302,21): warning C4244: 'argument': conversion from 'float' to 'const unsigned __int64', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(304,22): warning C4244: 'argument': conversion from 'float' to 'const unsigned __int64', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(306,21): warning C4244: 'argument': conversion from 'float' to 'const unsigned __int64', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(426,36): warning C4244: 'argument': conversion from 'float' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(430,41): warning C4244: 'argument': conversion from 'float' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\VulkanToolbox.cpp(430,58): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  Not all modules are compiled with -Gy (function comdat), build without incremental LTCG.
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\vk_mem_alloc.h(11514): error C4703: potentially uninitialized local pointer variable 'pData' used
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\vk_mem_alloc.h(11495): error C4703: potentially uninitialized local pointer variable 'pData' used
+LINK : fatal error LNK1257: code generation failed
