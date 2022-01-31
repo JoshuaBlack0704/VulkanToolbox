@@ -21,20 +21,22 @@ public:
 	glm::mat4 PVmat;
 	glm::mat4 Vmat;
 	glm::mat4 BuildProjection;
-	glm::vec3 pos;
-	glm::vec3 vel;
-	glm::vec3 accel;
-	glm::vec3 center = glm::vec3(0,0,1);
-	glm::ivec3 rotAxis;
+	glm::vec4 pos = glm::vec4(0,0,-50,1);
+	glm::vec4 vel = glm::vec4(0,0,0,1.0f);
+	glm::vec4 accel;
+	glm::vec4 center = glm::vec4(0,0,1, 1);
+	glm::vec3 rotAxis;
 	glm::mat4 rotMatrix = glm::mat4(1.0f);
-	glm::vec3 target;
+	glm::mat4 transMatrix;
+	glm::vec4 target;
 	double& deltaTime;
+	float& timeSpeedFactor;
 	vkt::VulkanObjectManager& vom;
 
-	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, double& _deltaTime) : deltaTime(_deltaTime), vom(_vom)
+	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, double& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor)
 	{
 
-		pos = glm::vec3(0, 0, -50);
+		pos = glm::vec4(0, 0, -50, 1);
 
 		wKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_W), GLFW_PRESS, [&]() {accel[2] = 1; spdlog::info("Moving ship forward"); });
 		wKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_W), GLFW_RELEASE, [&]() {accel[2] = 0;  vel[2] = 0; spdlog::info("Stopping ship"); });
@@ -57,32 +59,78 @@ public:
 		upKey =		   window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {     rotAxis[0] = 1; spdlog::info("Rotating ship up"); });
 		upKeyStop =	   window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {   rotAxis[0] = 0; spdlog::info("Stopping ship"); });
 
-		downKey =	   window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { rotAxis[0] = -1; spdlog::info("Rotating ship down"); });
+		downKey =	   window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { rotAxis[0] = -1; spdlog::info("Rotating ship down"); });
 		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { rotAxis[0] = 0; spdlog::info("Stopping ship"); });
 
-		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { rotAxis[1] = 1; spdlog::info("Rotating ship left"); });
+		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { rotAxis[1] = -1; spdlog::info("Rotating ship left"); });
 		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { rotAxis[1] = 0; spdlog::info("Stopping ship"); });
 
-		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() {rotAxis[1] = -1; spdlog::info("Rotating ship right"); });
+		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() {rotAxis[1] = 1; spdlog::info("Rotating ship right"); });
 		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() {rotAxis[1] = 0; spdlog::info("Stopping ship"); });
+
+		backspaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_BACKSPACE), GLFW_PRESS, [&]() {deltaTime *= -1; spdlog::info("Reversing time"); });
+		spaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_SPACE), GLFW_PRESS, [&]()
+		{
+			if (deltaTime != 0)
+			{
+				spdlog::info("stopping time");
+				deltaTime = 0;
+			}
+			else
+			{
+				spdlog::info("starting time");
+				deltaTime = 1;
+			}
+		});
+
+		numEnterKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_KP_ENTER), GLFW_PRESS, [&]()
+			{
+				spdlog::info("\nPlease enter new time speed factor:");
+				std::cin >> timeSpeedFactor;
+				spdlog::info(" New time speed factor set to: {}", timeSpeedFactor);
+			});
+		altKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_ALT), GLFW_PRESS, [&]()
+			{
+				spdlog::info("\nPlease enter new time speed factor:");
+				std::cin >> timeSpeedFactor;
+				spdlog::info(" New time speed factor set to: {}", timeSpeedFactor);
+
+			});
+
 	}
 
 	Character* Move()
 	{
-		/*if (rotAxis.x != 0 || rotAxis.y != 0 || rotAxis.z != 0)
+		if (rotAxis != glm::vec3(0))
 		{
-			center *= glm::rotate(glm::mat4(1.0f), 10 * static_cast<float>(deltaTime), static_cast<glm::vec3>(rotAxis));
-		}*/
+			rotMatrix = glm::rotate(rotMatrix, glm::radians(20*static_cast<float>(deltaTime)), (rotAxis));
+			center = rotMatrix * glm::vec4(0,0,1,1);
+		}
+
 
 		vel += accel;
-		pos += vel * glm::vec3(deltaTime, deltaTime, deltaTime);
+		pos += rotMatrix * vel * glm::vec4(deltaTime, deltaTime, deltaTime, 1);
+
+		return this;
+	}
+	Character* Move(double _externalDeltaTime)
+	{
+		if (rotAxis != glm::vec3(0))
+		{
+			rotMatrix = glm::rotate(rotMatrix, glm::radians(20 * static_cast<float>(_externalDeltaTime)), (rotAxis));
+			center = rotMatrix * glm::vec4(0, 0, 1, 1);
+		}
+
+
+		vel += accel;
+		pos += rotMatrix * vel * glm::vec4(_externalDeltaTime, _externalDeltaTime, _externalDeltaTime, 1);
 
 		return this;
 	}
 	glm::mat4 GetPVMat()
 	{
 		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
-		return clip * glm::perspective(glm::radians(70.0f), aspect, .1f, 10000.0f) * glm::lookAt(pos, pos + center, glm::vec3(0, -1, 0));
+		return clip * glm::perspective(glm::radians(70.0f), aspect, .1f, 1000.0f) * glm::lookAt(static_cast<glm::vec3>(pos), static_cast<glm::vec3>(pos + center), glm::vec3(0, -1, 0));
 	}
 
 private:
@@ -110,6 +158,12 @@ private:
 
 	std::shared_ptr<vkt::KeyMap> rightKey;
 	std::shared_ptr<vkt::KeyMap> rightKeyStop;
+
+	std::shared_ptr<vkt::KeyMap> backspaceKey;
+	std::shared_ptr<vkt::KeyMap> spaceKey;
+	std::shared_ptr<vkt::KeyMap> numEnterKey;
+	std::shared_ptr<vkt::KeyMap> altKey;
+
 };
 
 struct VertexData
@@ -405,14 +459,14 @@ int main()
 			std::uniform_real_distribution<float> speedDist(0, objectSpeed);
 			for (auto& pos : positions)
 			{
-				pos = glm::vec4(distribution(engine), distribution(engine), zdistribution(engine), 1);
-				//pos = glm::vec4(0, 0, 1000, 1);
+				//pos = glm::vec4(distribution(engine), distribution(engine), zdistribution(engine), 1);
+				pos = glm::vec4(0, 0, 1000, 1);
 			}
 			for (auto& vel : velocities)
 			{
 				vel.unitDirection = glm::normalize(glm::vec4(veloctyDist(engine), veloctyDist(engine), veloctyDist(engine), 0));
 				vel.speed = speedDist(engine);
-				vel.speed = 0;
+				//vel.speed = 0;
 
 
 			}
@@ -473,18 +527,35 @@ int main()
 		uint64_t frame = 0;
 		double cpuDeltaTime = 0;
 		double gpuDeltaTime = 0;
-		double accumulatedWaitTime = 0;
-		double deltaTime = 0;
-		auto keyFrameTime = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_ENTER), GLFW_PRESS, [&frame, &cpuDeltaTime, &gpuDeltaTime]() {spdlog::info("Frame: {} Fps: {:.3f}\nCpuTime: {:.3f} [ms] GpuDeltaTime: {:.3f} [ms]\n", frame, 1 / ((cpuDeltaTime + gpuDeltaTime) / 1000), cpuDeltaTime, gpuDeltaTime); });
+		double runtime = 0;
+		double simulatedTime;
+		double deltaTime = 1;
+		float timeSpeedFactor = 1;
+		double eventPollTime = 0;
 
-		Character cam(window, vom, deltaTime);
+		auto keyFrameTime = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_ENTER), GLFW_PRESS, [&frame, &cpuDeltaTime, &gpuDeltaTime, &runtime, &simulatedTime]() {spdlog::info("\nFrame: {} Fps: {:.3f}\nCpuTime: {:.3f} [ms] GpuDeltaTime: {:.3f} [ms]\nRun Time: {:.3f} Simulated Time: {:.3f}", frame, 1 / ((cpuDeltaTime + gpuDeltaTime) / 1000), cpuDeltaTime, gpuDeltaTime, runtime, simulatedTime); });
+
+		Character cam(window, vom, deltaTime, timeSpeedFactor);
 
 		uint32_t imageIndex;
 		auto imgAvailable = vom.MakeSemaphore();
 		cmdManager.DependsOn({ vkt::WaitData(std::make_shared<uint64_t>(0), imgAvailable, vk::PipelineStageFlagBits::eEarlyFragmentTests) });
 		while (window.Open())
 		{
-			deltaTime = deltaWatch.elapsed().count();
+			if (deltaTime == 0)
+			{
+				deltaTime = 0;
+			}
+			else
+			{
+				deltaTime = (deltaTime >= 0) ? (deltaWatch.elapsed().count()-eventPollTime) : (deltaWatch.elapsed().count()-eventPollTime) * -1;
+			}
+
+			runtime += deltaWatch.elapsed().count();
+			simulatedTime += deltaTime * timeSpeedFactor;
+			CamData camData{ cam.Move(deltaWatch.elapsed().count()-eventPollTime)->GetPVMat(), objectCount, static_cast<float>(deltaTime)*timeSpeedFactor };
+
+
 			deltaWatch.reset();
 
 			if (window.resized)
@@ -498,7 +569,6 @@ int main()
 			sw.reset();
 			descriptorManager.Update();
 
-			CamData camData{ cam.Move()->GetPVMat(), objectCount, static_cast<float>(deltaTime) };
 
 
 			cmdManager.Reset();
@@ -526,15 +596,10 @@ int main()
 			auto res = vom.GetGraphicsQueue().queue.presentKHR(vk::PresentInfoKHR(1, &cmdManager.syncManager.signalSemaphores[1].semaphore, 1, &vom.GetSwapchainData().swapchain, &imageIndex));
 			gpuDeltaTime = sw.elapsed().count() * 1000;
 
-			accumulatedWaitTime += cpuDeltaTime;
-			accumulatedWaitTime += gpuDeltaTime;
 
-			{
-				accumulatedWaitTime = 0;
-				//spdlog::info("Frame: {} Fps: {:.3f}\nCpuTime: {:.3f} [ms] GpuDeltaTime: {:.3f} [ms]\n", frame, 1 / ((cpuDeltaTime + gpuDeltaTime) / 1000), cpuDeltaTime, gpuDeltaTime);
-			}
-
+			eventPollTime = deltaWatch.elapsed().count();
 			glfwPollEvents();
+			eventPollTime = deltaWatch.elapsed().count() - eventPollTime;
 
 			frame++;
 		}

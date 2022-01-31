@@ -197,7 +197,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\EconSim4.1\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp" />
+    <ClCompile Include="..\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp" />
     <ClCompile Include="VulkanToolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -216,6 +216,9 @@
     <ClInclude Include="include\Internal\VulkanRenderpassManager.hpp" />
     <ClInclude Include="include\Internal\VulkanWindow.hpp" />
     <ClInclude Include="include\VulkanToolbox.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Builds\Release\x64\Controls.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

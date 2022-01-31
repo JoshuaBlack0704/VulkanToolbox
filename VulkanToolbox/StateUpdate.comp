@@ -21,7 +21,7 @@ layout (set = 0, binding = 2) buffer MatrixData{
 } mData;
 
 layout (push_constant) uniform data {
-    mat4 MVmatrix;
+    mat4 PVmatrix;
     float objectCount;
     float deltaTime;
 } cData;
@@ -128,7 +128,6 @@ vec4 q_slerp(vec4 a, vec4 b, float t) {
     return QUATERNION_IDENTITY;
 }
 
-
 mat4 matFromQuat(vec4 q)
 {
     mat4 rotMat;
@@ -184,6 +183,6 @@ void main() {
     mat[1] = vec4(0.0f, 1.0f, 0.0f, 0.0f);
     mat[2] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
     mat[3] = pData.positions[gID];
-    mData.rotMatrix[gID] = cData.MVmatrix*mat*rotMat;
+    mData.rotMatrix[gID] = cData.PVmatrix*mat*rotMat;
     }
 }

@@ -18,7 +18,7 @@
     <ClCompile Include="VulkanToolbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\EconSim4.1\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp">
+    <ClCompile Include="..\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,5 +56,8 @@
     <ClInclude Include="include\VulkanToolbox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Builds\Release\x64\Controls.txt" />
   </ItemGroup>
 </Project>
