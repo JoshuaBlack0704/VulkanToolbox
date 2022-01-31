@@ -1,6 +1,19 @@
 #pragma once
 namespace vkt
 {
+	struct KeyMap
+	{
+		int scanCode;
+		int action;
+		std::function<void()> callback;
+		KeyMap(int code, int _action, std::function<void()> function)
+		{
+			scanCode = code;
+			action = _action;
+			callback = function;
+		}
+	};
+
 	class VulkanWindow
 	{
 	public:
@@ -19,6 +32,7 @@ namespace vkt
 
 			glfwSetWindowUserPointer(window, this);
 			glfwSetWindowSizeCallback(window, Resized);
+			glfwSetKeyCallback(window, ExecuteKeys);
 		};
 		VulkanWindow(GLFWmonitor* monitor)
 		{
@@ -41,6 +55,12 @@ namespace vkt
 			return !glfwWindowShouldClose(window);
 		}
 
+		std::shared_ptr<KeyMap> AddKeyMap(int scanCode, int glfwAction, std::function<void()> function)
+		{
+			keyMaps.emplace_back(std::make_shared<KeyMap>(scanCode, glfwAction, function));
+			return keyMaps.back();
+		}
+
 		~VulkanWindow()
 		{
 			glfwDestroyWindow(window);
@@ -55,6 +75,18 @@ namespace vkt
 			width = width; height = height;
 			spdlog::info("Window resized! New width: {} New height: {}", width, height);
 		}
+		static void ExecuteKeys(GLFWwindow* window, int key, int scancode, int action, int mods)
+		{
+			VulkanWindow* obj = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
+			for (auto map : obj->keyMaps)
+			{
+				if (map->scanCode == scancode && map->action == action)
+				{
+					map->callback();
+				}
+			}
+		}
 
+		std::list<std::shared_ptr<KeyMap>> keyMaps;
 	};
 }

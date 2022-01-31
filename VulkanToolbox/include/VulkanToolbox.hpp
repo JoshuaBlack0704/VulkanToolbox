@@ -19,3 +19,4 @@
 #include "Internal/VulkanRenderpassManager.hpp"
 #include "Internal/VulkanPipelineManagers.hpp"
 #include "Internal/VulkanWindow.hpp"
+#define MemoryBarrier __faststorefence

@@ -207,6 +207,16 @@
     <None Include="shader.vert" />
     <None Include="StateUpdate.comp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Internal\VulkanCommandManager.hpp" />
+    <ClInclude Include="include\Internal\VulkanDescriptorManager.hpp" />
+    <ClInclude Include="include\Internal\VulkanMemoryManager.hpp" />
+    <ClInclude Include="include\Internal\VulkanObjectManager.hpp" />
+    <ClInclude Include="include\Internal\VulkanPipelineManagers.hpp" />
+    <ClInclude Include="include\Internal\VulkanRenderpassManager.hpp" />
+    <ClInclude Include="include\Internal\VulkanWindow.hpp" />
+    <ClInclude Include="include\VulkanToolbox.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
