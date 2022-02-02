@@ -513,7 +513,7 @@ int main()
 			velocities.resize(objectCount);
 			std::vector<MatrixData> matricies;
 			matricies.resize(objectCount);
-			std::vector<glm::vec3> colors;
+			std::vector<glm::vec4> colors;
 			colors.resize(objectCount);
 
 			std::default_random_engine engine;
@@ -535,8 +535,8 @@ int main()
 			}
 			for (auto& color : colors)
 			{
-				auto newColor = glm::vec3(1 - colorDist(engine), 1 - colorDist(engine), 1 - colorDist(engine));
-				if (newColor.x <= .1)
+				auto newColor = glm::vec4(1 - colorDist(engine), 1 - colorDist(engine), 1 - colorDist(engine), 0);
+				/*if (newColor.x <= .1)
 				{
 					newColor.x = 1;
 				}
@@ -547,7 +547,7 @@ int main()
 				if (newColor.z <= .1)
 				{
 					newColor.z = 1;
-				}
+				}*/
 				color = newColor;
 			}
 
