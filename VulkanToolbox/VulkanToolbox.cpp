@@ -237,6 +237,74 @@ struct Tetrahedron
 	};
 };
 
+struct PaperAirplane
+{
+	glm::vec3 nose{ 0, -1, 2 };
+	glm::vec3 backBottom{0, .25, -1};
+	glm::vec3 backMiddleLeft{ -.25, -.75, -1 };
+	glm::vec3 backMiddleRight{ .25, -.75, -1 };
+	glm::vec3 backTop{ 0, -1, -1 };
+	glm::vec3 leftWingTip{ -1, -1.15, -1.25 };
+	glm::vec3 rightWingTip{ 1, -1.15, -1.25 };
+	glm::vec3 color{ 1,1,1 };
+
+	std::vector<VertexData> vertices
+	{
+		//Right fuselage
+		{nose, color, GetSurfaceNormal(nose, backMiddleRight, backBottom)},
+		{backMiddleRight, color, GetSurfaceNormal(nose, backMiddleRight, backBottom)},
+		{backBottom, color, GetSurfaceNormal(nose, backMiddleRight, backBottom)},
+
+		//Right underwing
+		{nose, color, GetSurfaceNormal(nose, rightWingTip, backMiddleRight)},
+		{rightWingTip, color, GetSurfaceNormal(nose, rightWingTip, backMiddleRight)},
+		{backMiddleRight, color, GetSurfaceNormal(nose, rightWingTip, backMiddleRight)},
+
+		//Right top wing
+		{nose, color, GetSurfaceNormal(nose, backTop, rightWingTip)},
+		{backTop, color, GetSurfaceNormal(nose, backTop, rightWingTip)},
+		{rightWingTip, color, GetSurfaceNormal(nose, backTop, rightWingTip)},
+
+		//Left fuselage
+		{nose, color, GetSurfaceNormal(nose, backBottom, backMiddleLeft)},
+		{backBottom, color, GetSurfaceNormal(nose, backBottom, backMiddleLeft)},
+		{backMiddleLeft, color, GetSurfaceNormal(nose, backBottom, backMiddleLeft)},
+
+		//Left underwing
+		{nose, color, GetSurfaceNormal(nose, backMiddleLeft, leftWingTip)},
+		{backMiddleLeft, color, GetSurfaceNormal(nose, backMiddleLeft, leftWingTip)},
+		{leftWingTip, color, GetSurfaceNormal(nose, backMiddleLeft, leftWingTip)},
+
+		//Left top wing
+		{nose, color, GetSurfaceNormal(nose, leftWingTip, backTop)},
+		{leftWingTip, color, GetSurfaceNormal(nose, leftWingTip, backTop)},
+		{backTop, color, GetSurfaceNormal(nose, leftWingTip, backTop)},
+
+		//Back bottom
+		{backMiddleLeft, color, GetSurfaceNormal(backMiddleLeft, backBottom, backMiddleRight)},
+		{backBottom, color, GetSurfaceNormal(backMiddleLeft, backBottom, backMiddleRight)},
+		{backMiddleRight, color, GetSurfaceNormal(backMiddleLeft, backBottom, backMiddleRight)},
+
+		//Left Wing Back
+		{leftWingTip, color, GetSurfaceNormal(leftWingTip, backMiddleLeft, backTop)},
+		{backMiddleLeft, color, GetSurfaceNormal(leftWingTip, backMiddleLeft, backTop)},
+		{backTop, color, GetSurfaceNormal(leftWingTip, backMiddleLeft, backTop)},
+
+		//Right wing back
+		{rightWingTip, color, GetSurfaceNormal(rightWingTip, backTop, backMiddleRight)},
+		{backTop, color, GetSurfaceNormal(rightWingTip, backTop, backMiddleRight)},
+		{backMiddleRight, color, GetSurfaceNormal(rightWingTip, backTop, backMiddleRight)},
+
+		//Center Back
+		{backTop, color, GetSurfaceNormal(backTop, backMiddleLeft, backMiddleRight)},
+		{backMiddleLeft, color, GetSurfaceNormal(backTop, backMiddleLeft, backMiddleRight)},
+		{backMiddleRight, color, GetSurfaceNormal(backTop, backMiddleLeft, backMiddleRight)},
+	};
+
+
+
+};
+
 struct MatrixData
 {
 	alignas(16)glm::mat4 rotMatrix;
@@ -309,7 +377,7 @@ std::unique_ptr < vkt::GraphicsPipelineManager > CreatePresentation(vkt::VulkanO
 			vk::PipelineInputAssemblyStateCreateInfo({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE),
 			vk::Viewport(0, 0, bootSwapchain.extent.width, bootSwapchain.extent.height, 0, 1),
 			vk::Rect2D({ 0,0, }, bootSwapchain.extent),
-			vk::PipelineRasterizationStateCreateInfo({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, VK_FALSE, {}, {}, {}, 1.0f),
+			vk::PipelineRasterizationStateCreateInfo({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, {}, {}, {}, 1.0f),
 			vk::PipelineMultisampleStateCreateInfo({}, vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE),
 			vk::PipelineDepthStencilStateCreateInfo({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE, {}, {}, 0.0f, 1.0f),
 			std::vector{ vk::PipelineColorBlendAttachmentState(VK_FALSE, {}, {}, {}, {}, {}, {}, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA) },
@@ -325,21 +393,13 @@ int main()
 	vkb::PhysicalDevice bootPDevice;
 	vkb::Device bootDevice;
 
-#ifndef NDEBUG
+
 	uint32_t width = 500;
 	//spdlog::info("Set width: ");
 	//std::cin >> width;
 	uint32_t height = 500;
 	//spdlog::info("Set height: ");
 	//std::cin >> height;
-#else
-	uint32_t width = 500;
-	spdlog::info("Set width: ");
-	std::cin >> width;
-	uint32_t height = 500;
-	spdlog::info("Set height: ");
-	std::cin >> height;
-#endif
 
 #ifndef NDEBUG
 	float objectCount = 1000000;
@@ -441,7 +501,8 @@ int main()
 		auto velocitiesSector = gpuStorage.GetSector();
 		auto matrixSector = gpuStorage.GetSector();
 		auto vbo = vboStorage.GetSector();
-		Tetrahedron objectData;
+		auto colorBuffer = gpuStorage.GetSector();
+		PaperAirplane objectData;
 
 		{
 			float objectSpeed = 100;
@@ -452,11 +513,15 @@ int main()
 			velocities.resize(objectCount);
 			std::vector<MatrixData> matricies;
 			matricies.resize(objectCount);
+			std::vector<glm::vec3> colors;
+			colors.resize(objectCount);
+
 			std::default_random_engine engine;
 			std::uniform_real_distribution<float> distribution(-bounds, bounds);
 			std::uniform_real_distribution<float> zdistribution(0.0f, 148000);
 			std::uniform_real_distribution<float> veloctyDist(-1, 1);
 			std::uniform_real_distribution<float> speedDist(0, objectSpeed);
+			std::uniform_real_distribution<float> colorDist(0, 1);
 			for (auto& pos : positions)
 			{
 				//pos = glm::vec4(distribution(engine), distribution(engine), zdistribution(engine), 1);
@@ -467,23 +532,40 @@ int main()
 				vel.unitDirection = glm::normalize(glm::vec4(veloctyDist(engine), veloctyDist(engine), veloctyDist(engine), 0));
 				vel.speed = speedDist(engine);
 				//vel.speed = 0;
-
-
+			}
+			for (auto& color : colors)
+			{
+				auto newColor = glm::vec3(1 - colorDist(engine), 1 - colorDist(engine), 1 - colorDist(engine));
+				if (newColor.x <= .1)
+				{
+					newColor.x = 1;
+				}
+				if (newColor.y <= .1)
+				{
+					newColor.y = 1;
+				}
+				if (newColor.z <= .1)
+				{
+					newColor.z = 1;
+				}
+				color = newColor;
 			}
 
+			swapBuffer.CopyFromRam(sizeof(colors[0]) * colors.size(), colors.data(), transferSector);
+			swapBuffer.CopyToSector(transferSector, colorBuffer, sizeof(colors[0]) * colors.size());
 			swapBuffer.CopyFromRam(sizeof(positions[0]) * positions.size(), positions.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, postitionsSector);
+			swapBuffer.CopyToSector(transferSector, postitionsSector, sizeof(positions[0])* positions.size());
 			swapBuffer.CopyFromRam(sizeof(velocities[0]) * velocities.size(), velocities.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, velocitiesSector);
+			swapBuffer.CopyToSector(transferSector, velocitiesSector, sizeof(velocities[0]) * velocities.size());
 			swapBuffer.CopyFromRam(sizeof(matricies[0]) * matricies.size(), matricies.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, matrixSector);
+			swapBuffer.CopyToSector(transferSector, matrixSector, sizeof(matricies[0]) * matricies.size());
 			cpuStorage.Update();
 			gpuStorage.Update();
 			swapBuffer.Execute({}, true);
 			swapBuffer.Clear();
 			transferSector->neededSize = 0;
 			swapBuffer.CopyFromRam(sizeof(objectData.vertices[0]) * objectData.vertices.size(), objectData.vertices.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, vbo);
+			swapBuffer.CopyToSector(transferSector, vbo, sizeof(objectData.vertices[0]) * objectData.vertices.size());
 			vboStorage.Update();
 			swapBuffer.Execute({}, true);
 			swapBuffer.Clear();
@@ -500,6 +582,7 @@ int main()
 		computeSet->AttachSector(matrixSector, vk::ShaderStageFlagBits::eCompute);
 		auto graphicsSet = descriptorManager.GetNewSet();
 		graphicsSet->AttachSector(matrixSector, vk::ShaderStageFlagBits::eVertex);
+		graphicsSet->AttachSector(colorBuffer, vk::ShaderStageFlagBits::eVertex);
 		descriptorManager.Update();
 
 		vk::PushConstantRange camPush(vk::ShaderStageFlagBits::eCompute, 0, sizeof(CamData));

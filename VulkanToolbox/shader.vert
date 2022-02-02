@@ -8,6 +8,10 @@ layout(set = 0, binding = 0) buffer MVPData{
 mat4 MVPs[];
 }mvpData;
 
+layout(set = 0, binding = 1) buffer ColorData{
+vec3 ColorArray[];
+}colors;
+
 layout ( push_constant ) uniform data {
     mat4 PVmatrix;
     float objectCount;
@@ -34,6 +38,6 @@ void main()
 
 	//output the position of each vertex
 	gl_Position = mvpData.MVPs[gl_InstanceIndex] * vec4(pos, 1.0f);
-	outColor = color;
+	outColor = colors.ColorArray[gl_InstanceIndex];
 	outNormal = normalize(mvpData.MVPs[gl_InstanceIndex]*vec4(normal, 0)).xyz;
 }

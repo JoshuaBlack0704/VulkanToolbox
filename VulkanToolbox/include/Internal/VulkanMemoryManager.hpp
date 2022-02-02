@@ -23,6 +23,14 @@ namespace vkt
 		uint64_t allocatedSize;
 		uint64_t allocationOffset;
 		BufferManager* bufferAllocation;
+		void Reset()
+		{
+			neededSize = 0;
+		}
+		void SetSize(uint64_t _neededSize)
+		{
+			neededSize = _neededSize;
+		}
 	};
 
 	class BufferManager
@@ -205,7 +213,7 @@ namespace vkt
 		///\brief Copy from ram
 		TransferDetails(uint64_t _size, void* _src, std::shared_ptr<SectorData> _dst) : size(_size), ramSrc(_src), dstSector(_dst){}
 		///\brief Copy to sector
-		TransferDetails(std::shared_ptr<SectorData> src, std::shared_ptr<SectorData> dst) : srcSector(src), dstSector(dst){}
+		TransferDetails(std::shared_ptr<SectorData> src, std::shared_ptr<SectorData> dst, uint64_t _size) : srcSector(src), dstSector(dst), size(_size){}
 		///\brief Copy to image
 		TransferDetails(std::shared_ptr<SectorData> src, vk::Image dst) : srcSector(src), dstImage(dst) {}
 		///\brief Copy from image
@@ -323,11 +331,11 @@ namespace vkt
 				dst->neededSize = size;
 			}
 		}
-		void CopyToSector(std::shared_ptr<SectorData> src, std::shared_ptr<SectorData> dst)
+		void CopyToSector(std::shared_ptr<SectorData> src, std::shared_ptr<SectorData> dst, uint64_t size)
 		{
 			assert(src != nullptr);
 			assert(dst != nullptr);
-			transfers.emplace_back(TransferDetails(src, dst));
+			transfers.emplace_back(TransferDetails(src, dst, size));
 			if (dst->neededSize < src->neededSize)
 			{
 				dst->neededSize = src->neededSize;
@@ -503,7 +511,7 @@ namespace vkt
 							{
 								*transfer.srcVersion = transfer.srcSector->bufferAllocation->cmdManager.GetSubmitCount();
 								*transfer.dstVersion = transfer.dstSector->bufferAllocation->cmdManager.GetSubmitCount();
-								vk::BufferCopy copy(transfer.srcSector->allocationOffset, transfer.dstSector->allocationOffset, transfer.srcSector->neededSize);
+								vk::BufferCopy copy(transfer.srcSector->allocationOffset, transfer.dstSector->allocationOffset, transfer.size);
 								cmd.copyBuffer(transfer.srcSector->bufferAllocation->bufferData.buffer, transfer.dstSector->bufferAllocation->bufferData.buffer, 1, &copy);
 								dstSectors.emplace_back(transfer.dstSector);
 							}
