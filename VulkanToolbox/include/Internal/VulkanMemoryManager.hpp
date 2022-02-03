@@ -293,6 +293,258 @@ namespace vkt
 		}
 	};
 
+	enum class TransferType
+	{
+		FROMRAM = 0, TORAM = 1, SECTOR = 2, FROMIMAGE = 3, TOIMAGE = 4
+	};
+
+	struct FromRamEntity
+	{
+		TransferType type = TransferType::FROMRAM;
+		uint64_t const size;
+		void* const srcRam;
+		std::shared_ptr<SectorData> const dstSector;
+		FromRamEntity(uint64_t const _size, void* const _srcRam, std::shared_ptr<SectorData> const _dstSector)
+		: size(_size), srcRam(_srcRam), dstSector(_dstSector){}
+	};
+	struct ToRamEntity
+	{
+		TransferType type = TransferType::TORAM;
+		void* const dstRam;
+		std::shared_ptr<SectorData> const srcSector;
+		ToRamEntity(std::shared_ptr<SectorData> const _srcSector, void* const _dstRam)
+		: dstRam(_dstRam), srcSector(_srcSector){}
+	};
+	struct SectorTransferEntity
+	{
+		TransferType type = TransferType::SECTOR;
+		std::shared_ptr<SectorData> const srcSector;
+		std::shared_ptr<SectorData> const dstSector;
+		SectorTransferEntity(std::shared_ptr<SectorData> const _srcSector, std::shared_ptr<SectorData> const _dstSector)
+		: srcSector(_srcSector), dstSector(_dstSector){}
+	};
+	struct FromImageEntity
+	{
+		TransferType type = TransferType::FROMIMAGE;
+		vk::Image const srcImage;
+		std::shared_ptr<SectorData> const dstSector;
+		vk::BufferImageCopy copyData;
+		vk::ImageLayout const srcImageFormat;
+		FromImageEntity(vk::Image const _srcImage,
+			std::shared_ptr<SectorData> const _dstSector,
+			vk::BufferImageCopy _copyData,
+			vk::ImageLayout const _srcImageFormat
+		) : srcImage(_srcImage), dstSector(_dstSector), copyData(_copyData), srcImageFormat(_srcImageFormat){}
+	};
+	struct ToImageEntity
+	{
+		TransferType type = TransferType::TOIMAGE;
+		vk::Image const dstImage;
+		std::shared_ptr<SectorData> const srcSector;
+		vk::BufferImageCopy copyData;
+		vk::ImageLayout const dstImageFormat;
+		ToImageEntity(vk::Image const _dstImage,
+			std::shared_ptr<SectorData> const _srcSector,
+			vk::BufferImageCopy _copyData,
+			vk::ImageLayout const _dstImageFormat
+		) : dstImage(_dstImage), srcSector(_srcSector), copyData(_copyData), dstImageFormat(_dstImageFormat){}
+	};
+	struct TransferEntity
+	{
+		TransferType const type;
+		uint64_t const size;
+		std::shared_ptr<SectorData> const srcSector;
+		std::shared_ptr<SectorData> const dstSector;
+		void* const srcRam;
+		void* const dstRam;
+		vk::Image const srcImage;
+		vk::Image const dstImage;
+		vk::BufferImageCopy imageCopy;
+		vk::ImageLayout const imageLayout;
+
+		TransferEntity(TransferType const _type,
+			uint64_t const _size,
+			std::shared_ptr<SectorData> const _srcSector,
+			std::shared_ptr<SectorData> const _dstSector,
+			void* const _srcRam,
+			void* const _dstRam,
+			vk::Image const _srcImage,
+			vk::Image const _dstImage,
+			vk::BufferImageCopy _imageCopy,
+			vk::ImageLayout const _imageLayout
+		) : type(_type),
+		size(_size),
+		srcSector(_srcSector),
+		dstSector(_dstSector),
+		srcRam(_srcRam),
+		dstRam(_dstRam),
+		srcImage(_srcImage),
+		dstImage(_dstImage),
+		imageCopy(_imageCopy),
+		imageLayout(_imageLayout){}
+
+		FromRamEntity AsFromRamTransfer()
+		{
+			assert(srcRam != nullptr);
+			assert(dstSector != nullptr);
+			return FromRamEntity(size, srcRam, dstSector);
+		}
+		ToRamEntity AsToRamTransfer()
+		{
+			assert(dstRam != nullptr);
+			assert(srcSector != nullptr);
+			return ToRamEntity(srcSector, dstRam);
+		}
+		SectorTransferEntity AsSectorTransfer()
+		{
+			assert(srcSector != nullptr);
+			assert(dstSector != nullptr);
+			return SectorTransferEntity(srcSector, dstSector);
+		}
+		FromImageEntity AsFromImageTransfer()
+		{
+			assert(srcImage != NULL);
+			assert(dstSector != nullptr);
+			assert(imageCopy != vk::BufferImageCopy());
+			return FromImageEntity(srcImage, dstSector, imageCopy, imageLayout);
+		}
+		ToImageEntity AsToImageTransfer()
+		{
+			assert(dstImage != NULL);
+			assert(srcSector != nullptr);
+			assert(imageCopy != vk::BufferImageCopy());
+			return ToImageEntity(dstImage, srcSector, imageCopy, imageLayout);
+		}
+
+	};
+
+	class TransferData
+	{
+		std::vector<TransferType const> types;
+		std::vector<uint64_t const> sizes;
+		std::vector<uint64_t> srcVersion;
+		std::vector<uint64_t> dstVersion;
+		std::vector<std::shared_ptr<SectorData> const> srcSectors;
+		std::vector<std::shared_ptr<SectorData> const> dstSectors;
+		std::vector<void* const> srcRam;
+		std::vector<void* const> dstRam;
+		std::vector<vk::Image const> srcImage;
+		std::vector<vk::Image const> dstImage;
+		std::vector<vk::BufferImageCopy> imageCopies;
+		std::vector<vk::ImageLayout const> imageLayouts;
+
+		bool IsFromRamTransfer(uint64_t index)
+		{
+			return types[index] == TransferType::FROMRAM;
+		}
+		bool IsToRamTransfer(uint64_t index)
+		{
+			return types[index] == TransferType::TORAM;
+		}
+		bool IsSectorTransfer(uint64_t index)
+		{
+			return types[index] == TransferType::SECTOR;
+		}
+		bool IsFromImageTransfer(uint64_t index)
+		{
+			return types[index] == TransferType::FROMIMAGE;
+		}
+		bool IsToImageTransfer(uint64_t index)
+		{
+			return types[index] == TransferType::TOIMAGE;
+		}
+
+		TransferEntity operator[](uint64_t index)
+		{
+			return TransferEntity(
+				types[index],
+				sizes[index],
+				srcSectors[index],
+				dstSectors[index],
+				srcRam[index],
+				dstRam[index],
+				srcImage[index],
+				dstImage[index],
+				imageCopies[index],
+				imageLayouts[index]);
+		}
+		void EmplaceBack(TransferEntity entity)
+		{
+			types.emplace_back(entity.type);
+			sizes.emplace_back(entity.size);
+			srcVersion.emplace_back(-1);
+			dstVersion.emplace_back(-1);
+			srcSectors.emplace_back(entity.srcSector);
+			dstSectors.emplace_back(entity.dstSector);
+			srcRam.emplace_back(entity.srcRam);
+			dstRam.emplace_back(entity.dstRam);
+			srcImage.emplace_back(entity.srcImage);
+			dstImage.emplace_back(entity.dstImage);
+			imageCopies.emplace_back(entity.imageCopy);
+			imageLayouts.emplace_back(entity.imageLayout);
+		}
+		void EmplaceBack(FromRamEntity entity)
+		{
+			EmplaceBack(TransferEntity(
+				entity.type,
+				entity.size,
+				{},
+				entity.dstSector,
+				entity.srcRam,
+				{}, {}, {}, {}, {}));
+		}
+		void EmplaceBack(ToRamEntity entity)
+		{
+			EmplaceBack(TransferEntity(
+				entity.type,
+				{},
+				entity.srcSector,
+				{},
+				{},
+				entity.dstRam, {}, {}, {}, {}));
+		}
+		void EmplaceBack(SectorTransferEntity entity)
+		{
+			EmplaceBack(TransferEntity(
+				entity.type,
+				{},
+				entity.srcSector,
+				entity.dstSector,
+				{},
+				{}, {}, {}, {}, {}));
+		}
+		void EmplaceBack(FromImageEntity entity)
+		{
+			EmplaceBack(TransferEntity(
+				entity.type,
+				{},
+				{},
+				entity.dstSector,
+				{},
+				{},
+				entity.srcImage,
+				{},
+				entity.copyData,
+				entity.srcImageFormat));
+		}
+		void EmplaceBack(ToImageEntity entity)
+		{
+			EmplaceBack(TransferEntity(
+				entity.type,
+				{},
+				entity.srcSector,
+				{},
+				{},
+				{},
+				{},
+				entity.dstImage,
+				entity.copyData,
+				entity.dstImageFormat));
+		}
+
+
+	};
+
 	class MemoryOperationsBuffer
 	{
 	public:
@@ -303,18 +555,19 @@ namespace vkt
 		std::vector<TransferDetails> transfers;
 		std::vector<WaitData> waitDatas;
 		bool record = false;
+		BufferManager transferBuffer;
 
 		tf::Executor transferExecutor = tf::Executor(1);
 		tf::Taskflow flow;
 
 		MemoryOperationsBuffer(VulkanObjectManager& _vom)
-		: vom(_vom)
+		: vom(_vom), transferBuffer(_vom.GetDevice(), _vom.GetAllocator(), _vom.GetTransferQueue(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_ONLY)
 		{
 			vom.SetTransferQueue(_vom.GetTransferQueue());
 			commandBufferCache = CommandBufferCache(vom, vom.MakeCommandPool(vk::CommandPoolCreateInfo({}, vom.GetTransferQueue().index)));
 		}
-		MemoryOperationsBuffer(vk::Device deviceHandle, QueueData transferQueueData)
-		: vom(deviceHandle)
+		MemoryOperationsBuffer(vk::Device deviceHandle, VmaAllocator allocatorHandle, QueueData transferQueueData)
+		: vom(deviceHandle), transferBuffer(deviceHandle, allocatorHandle, transferQueueData, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_ONLY)
 		{
 			assert(transferQueueData.queue != NULL);
 			vom.SetTransferQueue(transferQueueData);
