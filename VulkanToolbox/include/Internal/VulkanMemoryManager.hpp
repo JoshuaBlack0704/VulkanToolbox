@@ -117,7 +117,7 @@ namespace vkt
 
 		void Update(bool wait = false)
 		{
-			if (cmdManager.GetSubmitCount() == 0)
+			if (bufferCreateInfo.size == 0)
 			{
 				uint64_t currentOffset = 0;
 
@@ -196,11 +196,13 @@ namespace vkt
 
 		void Clear()
 		{
+			bufferCreateInfo.size = 0;
 			sectors.clear();
 		}
 
 		void Free()
 		{
+			bufferCreateInfo.size = 0;
 			sectors.clear();
 			vom.Manage(bufferData);
 			vom.DisposeAll();
