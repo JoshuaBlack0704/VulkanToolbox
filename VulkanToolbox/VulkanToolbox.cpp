@@ -493,15 +493,13 @@ int main()
 
 
 		vkt::BufferManager vboStorage(vom, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-		vkt::BufferManager cpuStorage(vom, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_ONLY);
 		vkt::BufferManager gpuStorage(vom, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-		vkt::MemoryOperationsBuffer swapBuffer(vom);
-		auto transferSector = cpuStorage.GetSector();
 		auto postitionsSector = gpuStorage.GetSector();
 		auto velocitiesSector = gpuStorage.GetSector();
 		auto matrixSector = gpuStorage.GetSector();
 		auto vbo = vboStorage.GetSector();
 		auto colorBuffer = gpuStorage.GetSector();
+
 		PaperAirplane objectData;
 
 		{
@@ -533,6 +531,7 @@ int main()
 				vel.speed = speedDist(engine);
 				//vel.speed = 0;
 			}
+			float i = 0;
 			for (auto& color : colors)
 			{
 				auto newColor = glm::vec4(1 - colorDist(engine), 1 - colorDist(engine), 1 - colorDist(engine), 0);
@@ -549,27 +548,42 @@ int main()
 					newColor.z = 1;
 				}*/
 				color = newColor;
+				//color = glm::vec4(i, i, i, i);
+				i++;
 			}
 
-			swapBuffer.CopyFromRam(sizeof(colors[0]) * colors.size(), colors.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, colorBuffer, sizeof(colors[0]) * colors.size());
-			swapBuffer.CopyFromRam(sizeof(positions[0]) * positions.size(), positions.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, postitionsSector, sizeof(positions[0])* positions.size());
-			swapBuffer.CopyFromRam(sizeof(velocities[0]) * velocities.size(), velocities.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, velocitiesSector, sizeof(velocities[0]) * velocities.size());
-			swapBuffer.CopyFromRam(sizeof(matricies[0]) * matricies.size(), matricies.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, matrixSector, sizeof(matricies[0]) * matricies.size());
-			cpuStorage.Update();
-			gpuStorage.Update();
-			swapBuffer.Execute({}, true);
-			swapBuffer.Clear();
-			transferSector->neededSize = 0;
-			swapBuffer.CopyFromRam(sizeof(objectData.vertices[0]) * objectData.vertices.size(), objectData.vertices.data(), transferSector);
-			swapBuffer.CopyToSector(transferSector, vbo, sizeof(objectData.vertices[0]) * objectData.vertices.size());
-			vboStorage.Update();
-			swapBuffer.Execute({}, true);
-			swapBuffer.Clear();
+			vkt::MemoryOperationsBuffer infillBuffer(vom);
 
+
+			infillBuffer.RamToSector(colors.data(), colorBuffer, sizeof(colors[0])* colors.size());
+			infillBuffer.RamToSector(positions.data(), postitionsSector, sizeof(positions[0]) * positions.size());
+			infillBuffer.RamToSector(velocities.data(), velocitiesSector, sizeof(velocities[0]) * velocities.size());
+			infillBuffer.RamToSector(matricies.data(), matrixSector, sizeof(matricies[0]) * matricies.size());
+			infillBuffer.RamToSector(objectData.vertices.data(), vbo, sizeof(objectData.vertices[0]) * objectData.vertices.size());
+			gpuStorage.Update();
+			vboStorage.Update();
+			infillBuffer.Execute({}, true);
+
+			colors.clear();
+			colors.resize(objectCount);
+			positions.clear();
+			positions.resize(objectCount);
+			velocities.clear();
+			velocities.resize(objectCount);
+			matricies.clear();
+			matricies.resize(objectCount);
+
+			infillBuffer.Clear();
+			auto colorIn = infillBuffer.SectorToRam(colorBuffer, colors.data());
+			auto positionsIn = infillBuffer.SectorToRam(postitionsSector, positions.data());
+			auto velocitiesIn = infillBuffer.SectorToRam(velocitiesSector, velocities.data());
+			auto matricesIn = infillBuffer.SectorToRam(matrixSector, matricies.data());
+			infillBuffer.Execute({}, true);
+
+			colorIn.Execute();
+			positionsIn.Execute();
+			velocitiesIn.Execute();
+			matricesIn.Execute();
 
 		}
 

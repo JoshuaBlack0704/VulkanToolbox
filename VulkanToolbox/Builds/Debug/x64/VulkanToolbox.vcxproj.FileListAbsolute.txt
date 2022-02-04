@@ -1,1 +1,0 @@
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\Builds\Debug\x64\VulkanToolbox.exe
