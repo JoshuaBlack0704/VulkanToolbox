@@ -192,9 +192,16 @@ namespace vkt
 		 * \param deviceHandle The external device handle
 		 * \param manage Whether to tie the device handle's lifetime to the new vom
 		 */
-		VulkanObjectManager(vk::Device deviceHandle, bool manage = false)
+		VulkanObjectManager(vk::Device deviceHandle, bool manage = false, bool skipNullCheck = false)
 		{
-			SetDevice(deviceHandle);
+			if (!skipNullCheck)
+			{
+				SetDevice(deviceHandle);
+			}
+			else
+			{
+				device = deviceHandle;
+			}
 			if (manage)
 			{
 				Manage(deviceHandle);
@@ -1241,7 +1248,7 @@ namespace vkt
 			waitSemaphores.ExtractTimelineValues();
 			signalSemaphores.ExtractTimelineValues();
 			timelineSubmitInfo = vk::TimelineSemaphoreSubmitInfo(
-				(withNormalWaits)? waitSemaphores.size() : waitSemaphores.timelineCount,
+				(withNormalWaits && waitSemaphores.timelineCount > 0)? waitSemaphores.size() : waitSemaphores.timelineCount,
 				waitSemaphores.extractedTimelineValues.data(),
 				(withNormalSignals)? signalSemaphores.size() : signalSemaphores.timelineCount,
 				signalSemaphores.extractedTimelineValues.data());
@@ -1250,14 +1257,7 @@ namespace vkt
 		}
 		vk::TimelineSemaphoreSubmitInfo* GetTimelineSubmitInfoPtr(bool withNormalWaits = true, bool withNormalSignals = true)
 		{
-			waitSemaphores.ExtractTimelineValues();
-			signalSemaphores.ExtractTimelineValues();
-			timelineSubmitInfo = vk::TimelineSemaphoreSubmitInfo(
-				(withNormalWaits) ? waitSemaphores.size() : waitSemaphores.timelineCount,
-				waitSemaphores.extractedTimelineValues.data(),
-				(withNormalSignals) ? signalSemaphores.size() : signalSemaphores.timelineCount,
-				signalSemaphores.extractedTimelineValues.data());
-
+			GetTimelineSubmitInfo(withNormalWaits, withNormalSignals);
 			return &timelineSubmitInfo;
 		}
 		void Clear()

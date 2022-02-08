@@ -103,7 +103,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\AutoRepos\vk-bootstrap\src;$(SolutionDir)Dependencies\AutoRepos\glm\glm;C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,7 +122,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\AutoRepos\vk-bootstrap\src;$(SolutionDir)Dependencies\AutoRepos\glm\glm;C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,7 +141,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\AutoRepos\vk-bootstrap\src;$(SolutionDir)Dependencies\AutoRepos\glm\glm;C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,7 +160,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\AutoRepos\vk-bootstrap\src;$(SolutionDir)Dependencies\AutoRepos\glm\glm;C:\VulkanSDK\1.2.198.1\Include;$(SolutionDir)VulkanToolbox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,7 +171,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp" />
     <ClCompile Include="Proceduralization.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CompileShaders.bat" />
+    <None Include="shader.frag" />
+    <None Include="shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

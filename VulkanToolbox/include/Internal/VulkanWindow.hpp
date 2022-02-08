@@ -23,6 +23,7 @@ namespace vkt
 		int width, height;
 		uint32_t extensionCount;
 		const char** extensions;
+
 		VulkanWindow(uint32_t width, uint32_t height)
 		{
 			glfwInit();
@@ -50,6 +51,11 @@ namespace vkt
 			}
 		}
 
+		void AttachResizeAction(std::function<void(GLFWwindow* window, int width, int height)> function)
+		{
+			resizeActions.emplace_back(function);
+		}
+
 		bool Open()
 		{
 			return !glfwWindowShouldClose(window);
@@ -72,13 +78,18 @@ namespace vkt
 		{
 			VulkanWindow* obj = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
 			obj->resized = true;
-			width = width; height = height;
-			spdlog::info("Window resized! New width: {} New height: {}", width, height);
+			obj->width = width; obj->height = height;
+
+			for (auto& action : obj->resizeActions)
+			{
+				action(window, width, height);
+			}
+
 		}
 		static void ExecuteKeys(GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			VulkanWindow* obj = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
-			for (auto map : obj->keyMaps)
+			for (auto const& map : obj->keyMaps)
 			{
 				if (map->scanCode == scancode && map->action == action)
 				{
@@ -87,6 +98,7 @@ namespace vkt
 			}
 		}
 
+		std::list<std::function<void(GLFWwindow* window, int width, int height)>> resizeActions;
 		std::list<std::shared_ptr<KeyMap>> keyMaps;
 	};
 }

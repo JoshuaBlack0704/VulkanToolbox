@@ -236,7 +236,6 @@ struct Tetrahedron
 	{frontTop,  color, GetSurfaceNormal(back, frontTop, bottomRight)}
 	};
 };
-
 struct PaperAirplane
 {
 	glm::vec3 nose{ 0, -1, 2 };
@@ -395,11 +394,7 @@ int main()
 
 
 	uint32_t width = 500;
-	//spdlog::info("Set width: ");
-	//std::cin >> width;
 	uint32_t height = 500;
-	//spdlog::info("Set height: ");
-	//std::cin >> height;
 
 #ifndef NDEBUG
 	float objectCount = 1000000;
@@ -636,7 +631,7 @@ int main()
 
 		uint32_t imageIndex;
 		auto imgAvailable = vom.MakeSemaphore();
-		cmdManager.DependsOn({ vkt::WaitData(std::make_shared<uint64_t>(0), imgAvailable, vk::PipelineStageFlagBits::eEarlyFragmentTests) });
+		cmdManager.DependsOn({ {nullptr, imgAvailable, vk::PipelineStageFlagBits::eEarlyFragmentTests} });
 		while (window.Open())
 		{
 			if (deltaTime == 0)

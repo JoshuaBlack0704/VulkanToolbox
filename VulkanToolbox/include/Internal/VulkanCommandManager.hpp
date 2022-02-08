@@ -126,7 +126,7 @@ namespace vkt
 				(*submitCount)++;
 			}
 			auto timelineSubmitInfoPtr = syncManager.GetTimelineSubmitInfoPtr(withNormalWaits, useNormalSignal);
-			submitInfo = vk::SubmitInfo(timelineSubmitInfoPtr->waitSemaphoreValueCount, syncManager.waitSemaphores.semaphores.data(),
+			submitInfo = vk::SubmitInfo(syncManager.waitSemaphores.size(), syncManager.waitSemaphores.semaphores.data(),
 				syncManager.waitSemaphores.waitStages.data(),
 				cmdCache.usedCommandBuffers->size(), cmdCache.usedCommandBuffers->data(), timelineSubmitInfoPtr->signalSemaphoreValueCount,
 				syncManager.signalSemaphores.semaphores.data());
@@ -181,6 +181,10 @@ namespace vkt
 		SemaphoreDataEntity GetMainTimelineSignal()
 		{
 			return syncManager.signalSemaphores[0];
+		}
+		SemaphoreDataEntity GetMainSignal()
+		{
+			return syncManager.signalSemaphores[1];
 		}
 		CommandBufferCache cmdCache;
 		SyncManager syncManager;
