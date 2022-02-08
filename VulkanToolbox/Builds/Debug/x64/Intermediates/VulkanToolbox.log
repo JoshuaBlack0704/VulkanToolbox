@@ -1,12 +1,12 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(495,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(496,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   VulkanToolbox.cpp
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1091,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1089,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1103,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1101,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(107,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
-C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(122,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1246,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1244,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1258,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanObjectManager.hpp(1256,6): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(117,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanCommandManager.hpp(132,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
 C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanMemoryManager.hpp(178,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
 C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanMemoryManager.hpp(615,17): warning C4553: '==': result of expression not used; did you intend '='?
 C:\Users\knigh\Documents\GitHub\VulkanToolbox\VulkanToolbox\include\Internal\VulkanDescriptorManager.hpp(59,1): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data

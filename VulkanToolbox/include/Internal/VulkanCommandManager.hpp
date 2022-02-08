@@ -1,10 +1,20 @@
 #pragma once
 namespace vkt
 {
+	/**
+	 * \brief The command Manager is a system that allows the easy management of command pools and external synchronization
+	 */
 	class CommandManager
 	{
 	public:
-
+		/**
+		 * \brief Constructor overload that extracts the data it needs from an external vom
+		 * \param _vom The parent vom, note that the command managers vom will use the same device the this vom uses
+		 * \param targetQueue This is the queue that ALL command buffers that this command manager will control will need to be submitted to
+		 * \param createInternalCommandPool Set this to true if you would like the command managers internal command buffer cache to create its own 
+		 * \param _targetStages 
+		 * \param startingSubmitCount 
+		 */
 		CommandManager(VulkanObjectManager& _vom, QueueData targetQueue, bool createInternalCommandPool, vk::PipelineStageFlags _targetStages, uint64_t startingSubmitCount = 0)
 		: syncManager(_vom), vom(_vom)
 		{

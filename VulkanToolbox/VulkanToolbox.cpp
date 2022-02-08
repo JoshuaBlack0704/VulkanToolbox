@@ -218,22 +218,22 @@ struct Tetrahedron
 	glm::vec3 back{ 0, 0, 3 };
 	glm::vec3 color{ 1,1,1 };
 	std::vector<VertexData> vertices{
-		//Front face
-	{bottomLeft,     color, GetSurfaceNormal(frontTop, bottomLeft, bottomRight)},
+	//Front face
+	{bottomRight,     color, GetSurfaceNormal(frontTop, bottomLeft, bottomRight)},
 	{frontTop, color, GetSurfaceNormal(frontTop, bottomLeft, bottomRight)},
-	{bottomRight,  color, GetSurfaceNormal(frontTop, bottomLeft, bottomRight)},
+	{bottomLeft,  color, GetSurfaceNormal(frontTop, bottomLeft, bottomRight)},
 	//Bottom face
 	{bottomLeft,  color, GetSurfaceNormal(bottomLeft, back, bottomRight)},
-	{bottomRight,        color, GetSurfaceNormal(bottomLeft, back, bottomRight)},
-	{back, color, GetSurfaceNormal(bottomLeft, back, bottomRight)},
+	{back,        color, GetSurfaceNormal(bottomLeft, back, bottomRight)},
+	{bottomRight, color, GetSurfaceNormal(bottomLeft, back, bottomRight)},
 	//Top Left face
 	{bottomLeft, color, GetSurfaceNormal(back, bottomLeft, frontTop)},
-	{back,        color, GetSurfaceNormal(back, bottomLeft, frontTop)},
-	{frontTop,       color, GetSurfaceNormal(back, bottomLeft, frontTop)},
+	{frontTop,        color, GetSurfaceNormal(back, bottomLeft, frontTop)},
+	{back,       color, GetSurfaceNormal(back, bottomLeft, frontTop)},
 	//Top Right face
 	{bottomRight,       color, GetSurfaceNormal(back, frontTop, bottomRight)},
-	{frontTop,        color, GetSurfaceNormal(back, frontTop, bottomRight)},
-	{back,  color, GetSurfaceNormal(back, frontTop, bottomRight)}
+	{back,        color, GetSurfaceNormal(back, frontTop, bottomRight)},
+	{frontTop,  color, GetSurfaceNormal(back, frontTop, bottomRight)}
 	};
 };
 
@@ -500,7 +500,7 @@ int main()
 		auto vbo = vboStorage.GetSector();
 		auto colorBuffer = gpuStorage.GetSector();
 
-		PaperAirplane objectData;
+		Tetrahedron objectData;
 
 		{
 			float objectSpeed = 100;

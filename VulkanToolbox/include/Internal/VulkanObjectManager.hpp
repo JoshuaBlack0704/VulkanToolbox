@@ -1,38 +1,96 @@
 #pragma once
 namespace vkt
 {
+	/**
+	 * \brief A struct used by the VulkanObjectManager class to store buffers created by a vmaAllocator
+	 */
 	struct VmaBuffer
 	{
+		/**
+		 * \brief The allocations buffer
+		 */
 		vk::Buffer buffer;
+
+		/**
+		 * \brief The allocation
+		 */
 		VmaAllocation allocation;
+
+		/**
+		 * \brief The allocation info
+		 */
 		VmaAllocationInfo allocationInfo;
 	};
 
+	/**
+	 * \brief A struct used by the VulkanObjectManager class to store images created by a vmaAllocator
+	 */
 	struct VmaImage
 	{
+		/**
+		 * \brief The allocations image
+		 */
 		vk::Image image;
+
+		/**
+		 * \brief A view that is created by the VulkanObjectManager right after allocation
+		 */
 		vk::ImageView view;
+
+		/**
+		 * \brief The allocation
+		 */
 		VmaAllocation allocation;
+
+		/**
+		 * \brief The allocations info
+		 */
 		VmaAllocationInfo allocationInfo;
 	};
 
-	enum class DestructionSettings
-	{
-		ALL = 1, PRESENTATION = 2, LOCALS = 3
-	};
-
+	/**
+	 * \brief A struct to pass a queue and its index
+	 */
 	struct QueueData
 	{
+		/**
+		 * \brief The index of the queue
+		 */
 		uint32_t index;
+
+		/**
+		 * \brief The queue
+		 */
 		vk::Queue queue;
 	};
 
+	/**
+	 * \brief A struct used by many managers to store the data needed to wait on either a normal or timelinesemaphore
+	 */
 	struct WaitData
 	{
+		/**
+		 * \brief This is a pointer to a value that can later be dereferenced to provide an accurate wait value
+		 */
 		std::shared_ptr<uint64_t> waitValuePtr;
+
+		/**
+		 * \brief The semaphore of this wait data, if can be infered either a normal or timeline semaphore by the if the waitValuePtr is nullptr or not
+		 */
 		vk::Semaphore waitSemaphore;
+
+		/**
+		 * \brief The stage that accompanies a waitSemaphore submission for a vk::submit
+		 */
 		vk::PipelineStageFlags waitStage;
 
+
+		/**
+		 * \brief The main constructor
+		 * \param _waitValuePtr This can be either null or a real pointer which can help distinguish the between a normal or timelineSemaphore
+		 * \param _waitSemaphore Must be a valid semaphore
+		 * \param _waitStage The accompanying wait stage
+		 */
 		WaitData(std::shared_ptr<uint64_t> _waitValuePtr, vk::Semaphore _waitSemaphore, vk::PipelineStageFlags _waitStage)
 		{
 			waitValuePtr = _waitValuePtr;
@@ -41,41 +99,99 @@ namespace vkt
 		}
 	};
 
+	/**
+	 * \brief A struct used by the VulkanObjectManager class to store all the data it needs to abstract a swapchain
+	 */
 	struct SwapchainData
 	{
+		/**
+		 * \brief The managed swapchain
+		 */
 		vk::SwapchainKHR swapchain;
+
+		/**
+		 * \brief The format chosen for the current swapchain
+		 */
 		vk::Format imageFormat;
+
+		/**
+		 * \brief The extent of the current swapchain
+		 */
 		vk::Extent2D extent;
+
+		/**
+		 * \brief All of the images wrapped in a VmaImage struct
+		 */
 		std::vector<VmaImage> images;
+
+		/**
+		 * \brief Can be used to return a certain swapchain image by index
+		 * \param index The index of the requested swapchain index
+		 * \return A VmaImage struct containing both the swapchain image and its view
+		 */
 		VmaImage GetImage(uint64_t index)
 		{
 			return images[index];
 		}
+
+		/**
+		 * \brief Gets the managed swapchain
+		 * \return 
+		 */
 		vk::SwapchainKHR GetSwapchain()
 		{
 			return swapchain;
 		}
+
+		/**
+		 * \brief Gets the managed swapchain's format
+		 * \return 
+		 */
 		vk::Format GetFormat()
 		{
 			return imageFormat;
 		}
+
+		/**
+		 * \brief Gets the managed swapchains's extent
+		 * \return 
+		 */
 		vk::Extent2D GetExtent()
 		{
 			return extent;
 		}
+
+		/**
+		 * \brief Returns the whole images vector 
+		 * \return A vector of VmaImage structs
+		 */
 		std::vector<VmaImage>& GetImages()
 		{
 			return images;
 		}
 	};
 
+
+	/**
+	 * \brief The key component of all the other managers, a system that handles the creation of other vulkan objects as well as their lifetimes in RAII style
+	 */
 	class VulkanObjectManager
 	{
 	public:
+		/**
+		 * \brief This constructor uses a parent vom, NOTE this will make the new vom a derivative of the parent and will share the devices
+		 * \param _vom The parent vom whose device will be used to initialize the new vom
+		 */
 		VulkanObjectManager(VulkanObjectManager& _vom)
 		{
 			SetDevice(_vom.GetDevice());
 		}
+
+		/**
+		 * \brief This constructor uses an external device handle to initialize its self
+		 * \param deviceHandle The external device handle
+		 * \param manage Whether to tie the device handle's lifetime to the new vom
+		 */
 		VulkanObjectManager(vk::Device deviceHandle, bool manage = false)
 		{
 			SetDevice(deviceHandle);
@@ -84,26 +200,47 @@ namespace vkt
 				Manage(deviceHandle);
 			}
 		}
+
+		/**
+		 * \brief returns the currently mounted device
+		 * \return The currently mounted device
+		 */
 		vk::Device GetDevice()
 		{
 			assert(device != NULL);
 			return device;
 		}
+		/**
+		 * \brief returns the currently mounted Instance
+		 * \return The currently mounted Instance
+		 */
 		vk::Instance GetInstance()
 		{
 			assert(instance != NULL);
 			return instance;
 		}
+		/**
+		 * \brief returns the currently mounted PhysicalDevice
+		 * \return The currently mounted PhysicalDevice
+		 */
 		vk::PhysicalDevice GetPhysicalDevice()
 		{
 			assert(physicalDevice != NULL);
 			return physicalDevice;
 		}
+		/**
+		 * \brief returns the currently mounted Surface
+		 * \return The currently mounted Surface
+		 */
 		vk::SurfaceKHR GetSurface()
 		{
 			assert(surface != NULL);
 			return surface;
 		}
+		/**
+		 * \brief returns the currently mounted SwapchainData struct
+		 * \return The currently mounted SwapchainData struct
+		 */
 		SwapchainData& GetSwapchainData(bool ignoreCheck = false)
 		{
 			if (!ignoreCheck)
@@ -112,21 +249,39 @@ namespace vkt
 			}
 			return swapchain;
 		}
+
+		/**
+		 * \brief Sets the mounted device used to perform the vom's functions
+		 * \param _deviceToMount The device to mount, NOTE this does not tie the devices lifetime to the vom
+		 */
 		void SetDevice(vk::Device _deviceToMount)
 		{
 			assert(_deviceToMount != NULL);
 			device = _deviceToMount;
 		}
+
+		/**
+		 * \brief Sets the mounted Instance used to perform the vom's functions
+		 * \param _instanceToMount The Instance to mount, NOTE this does not tie the Instance's lifetime to the vom
+		 */
 		void SetInstance(vk::Instance _instanceToMount)
 		{
 			assert(_instanceToMount != NULL);
 			instance = _instanceToMount;
 		}
+		/**
+		 * \brief Sets the mounted device used to perform the vom's functions
+		 * \param _deviceToMount The device to mount, NOTE this does not tie the devices lifetime to the vom
+		 */
 		void SetPhysicalDevice(vk::PhysicalDevice _physicalDeviceToMount)
 		{
 			assert(_physicalDeviceToMount != NULL);
 			physicalDevice = _physicalDeviceToMount;
 		}
+		/**
+		 * \brief Sets the mounted device used to perform the vom's functions
+		 * \param _deviceToMount The device to mount, NOTE this does not tie the devices lifetime to the vom
+		 */
 		void SetQueues(QueueData _graphicsQueueToMount, QueueData _transferQueueToMount, QueueData _computeQueueToMount)
 		{
 			assert(_graphicsQueueToMount.queue != NULL);
