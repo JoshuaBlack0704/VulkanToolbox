@@ -1,6 +1,0 @@
-Enter: time info
-wasd: movement keys
-arrrow keys: rotation
-lAlt or kpEnter: time speed factor set
-space: freeze/unfreez time
-backspace: reverse time flow
