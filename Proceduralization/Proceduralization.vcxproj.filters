@@ -28,5 +28,6 @@
     </None>
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="MakeRandomData.comp" />
   </ItemGroup>
 </Project>

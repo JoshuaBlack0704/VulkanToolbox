@@ -176,6 +176,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CompileShaders.bat" />
+    <None Include="MakeRandomData.comp" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
   </ItemGroup>
