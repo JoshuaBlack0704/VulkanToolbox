@@ -46,6 +46,9 @@ namespace vkt
 		 * \brief The allocations info
 		 */
 		VmaAllocationInfo allocationInfo;
+
+		vk::Format imageFormat;
+		vk::ImageLayout layout;
 	};
 
 	/**
@@ -252,9 +255,9 @@ namespace vkt
 		{
 			if (!ignoreCheck)
 			{
-				assert(swapchain.swapchain != NULL);
+				assert(swapchainData.swapchain != NULL);
 			}
-			return swapchain;
+			return swapchainData;
 		}
 
 		/**
@@ -303,34 +306,28 @@ namespace vkt
 			assert(_surfaceToMount != NULL);
 			surface = _surfaceToMount;
 		}
-		void SetSwapchain(SwapchainData swapchainData, bool manage = false)
+		void SetSwapchain(vk::SwapchainKHR swapchain, vk::Format imageFormat, vk::Extent2D extent, bool manage = false)
 		{
-			assert(swapchainData.swapchain != NULL);
-			swapchain = swapchainData;
+			assert(swapchain != NULL);
+			swapchainData = SwapchainData{swapchain, imageFormat, extent};
+			auto images = GetDevice().getSwapchainImagesKHR(GetSwapchainData().GetSwapchain());
+			for(auto& image : images)
+			{
+				swapchainData.images.emplace_back(image, MakeImageView
+				(vk::ImageViewCreateInfo({},
+					image,
+					vk::ImageViewType::e2D,
+					swapchainData.imageFormat,
+					vk::ComponentMapping(),
+					vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
+				));
+
+				swapchainData.GetImages().back().layout = vk::ImageLayout::eColorAttachmentOptimal;
+				swapchainData.GetImages().back().imageFormat = imageFormat;
+			}
 			if (manage)
 			{
 				Manage(GetSwapchainData());
-			}
-			if (swapchainData.imageFormat != vk::Format())
-			{
-				swapchain.images.clear();
-				auto images = GetDevice().getSwapchainImagesKHR(GetSwapchainData().GetSwapchain());
-				for (size_t i = 0; i < images.size(); i++)
-				{
-					swapchain.images.emplace_back
-					(images[i],
-						MakeImageView
-						(vk::ImageViewCreateInfo({},
-							images[i],
-							vk::ImageViewType::e2D,
-							swapchainData.imageFormat,
-							vk::ComponentMapping(),
-							vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
-						)
-					);
-
-
-				}
 			}
 		}
 
@@ -567,7 +564,7 @@ namespace vkt
 		{
 
 			VmaBuffer allocation;
-			VkBufferCreateInfo bufferCreateInfo = bufferInfo;
+			VkBufferCreateInfo bufferCreateInfo = (VkBufferCreateInfo)bufferInfo;
 			VkBuffer buf;
 			vmaCreateBuffer(GetAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buf, &allocation.allocation, &allocation.allocationInfo);
 			allocation.buffer = buf;
@@ -577,15 +574,52 @@ namespace vkt
 			}
 			return allocation;
 		}
-		VmaImage VmaMakeImage(vk::ImageCreateInfo imageInfo, vk::ImageViewCreateInfo viewInfo, VmaAllocationCreateInfo allocationCreateInfo, bool manage = true)
+		VmaImage VmaMakeImage(vk::ImageCreateInfo imageInfo, vk::ImageViewCreateInfo viewInfo, VmaAllocationCreateInfo allocationCreateInfo, bool transition = true, bool manage = true)
 		{
 			VkImage image;
 			VmaImage imageData;
-			VkImageCreateInfo _imageInfo = imageInfo;
+			VkImageCreateInfo _imageInfo = (VkImageCreateInfo)imageInfo;
+			_imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageData.layout = imageInfo.initialLayout;
 			vmaCreateImage(GetAllocator(), &_imageInfo, &allocationCreateInfo, &image, &imageData.allocation, &imageData.allocationInfo);
 			imageData.image = image;
 			viewInfo.image = imageData.image;
 			imageData.view = MakeImageView(viewInfo);
+			imageData.imageFormat = imageInfo.format;
+			
+			if (transition)
+			{
+				auto pool = MakeCommandPool(vk::CommandPoolCreateInfo({}, GetGraphicsQueue().index), false);
+				auto cmd = MakeCommandBuffers(vk::CommandBufferAllocateInfo(pool, vk::CommandBufferLevel::ePrimary, 1))[0];
+				cmd.begin(vk::CommandBufferBeginInfo());
+				TransitionImages(
+					cmd,
+					{ vk::ImageMemoryBarrier(
+						vk::AccessFlagBits::eNone,
+						vk::AccessFlagBits::eMemoryWrite,
+						vk::ImageLayout::eUndefined,
+						imageInfo.initialLayout,
+						VK_QUEUE_FAMILY_IGNORED,
+						VK_QUEUE_FAMILY_IGNORED,
+						imageData.image,
+						viewInfo.subresourceRange) },
+					vk::PipelineStageFlagBits::eAllCommands,
+					vk::PipelineStageFlagBits::eAllCommands);
+				cmd.end();
+				auto fence = MakeFence(false, false);
+				vk::SubmitInfo submit(
+					{},
+					{},
+					{},
+					1,
+					&cmd,
+					{},
+					{});
+				auto res = GetGraphicsQueue().queue.submit(1, &submit, fence);
+				res = GetDevice().waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
+				GetDevice().destroyFence(fence);
+				GetDevice().destroyCommandPool(pool);
+			}
 			if (manage)
 			{
 				Manage(imageData);
@@ -593,6 +627,21 @@ namespace vkt
 			return imageData;
 
 		}
+
+		void TransitionImages(vk::CommandBuffer cmd, std::vector<vk::ImageMemoryBarrier> imageTransitions, vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage)
+		{
+			cmd.pipelineBarrier(
+				srcStage,
+				dstStage,
+				{},
+				0,
+				{},
+				0,
+				{},
+				imageTransitions.size(),
+				imageTransitions.data());
+		}
+
 		vk::ShaderModule MakeShaderModule(const char* shaderPath, bool manage = true)
 		{
 			std::ifstream file(shaderPath, std::ios::ate | std::ios::binary);
@@ -960,7 +1009,7 @@ namespace vkt
 		std::deque<VmaImage> vmaImagesToDestroy;
 		std::deque<vk::ShaderModule> shaderModulesToDestroy;
 		std::deque<vk::Framebuffer> framebuffersToDestroy;
-		SwapchainData swapchain;
+		SwapchainData swapchainData;
 	};
 
 	class TimelineSemaphore

@@ -331,7 +331,7 @@ std::unique_ptr < vkt::GraphicsPipelineManager > CreatePresentation(vkt::VulkanO
 		_vom.DestroyType(vk::ImageView());
 		_vom.DestroyType(vk::Image());
 		_vom.DestroyType(vkt::VmaImage());
-		_vom.SetSwapchain({ bootSwapchain.swapchain, (vk::Format)bootSwapchain.image_format, bootSwapchain.extent }, true);
+		_vom.SetSwapchain(bootSwapchain.swapchain, (vk::Format)bootSwapchain.image_format, bootSwapchain.extent, true);
 
 		auto gQueue = _vom.GetGraphicsQueue();
 
@@ -431,7 +431,7 @@ int main()
 
 	vkb::PhysicalDeviceSelector physicalDeviceSelector(bootInstance);
 	vk::PhysicalDeviceVulkan12Features features; features.timelineSemaphore = VK_TRUE;
-	auto pDeviceRet = physicalDeviceSelector.set_surface(window.surface).add_required_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME).set_required_features_12(features).require_present().select();
+	auto pDeviceRet = physicalDeviceSelector.set_surface(window.surface).add_required_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME).set_required_features_12((VkPhysicalDeviceVulkan12Features)features).require_present().select();
 	std::cout << "Selected device named: " << pDeviceRet->properties.deviceName << "\n";
 	if (!pDeviceRet)
 	{
@@ -495,7 +495,7 @@ int main()
 		auto vbo = vboStorage.GetSector();
 		auto colorBuffer = gpuStorage.GetSector();
 
-		Tetrahedron objectData;
+		PaperAirplane objectData;
 
 		{
 			float objectSpeed = 100;

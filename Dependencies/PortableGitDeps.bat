@@ -1,7 +1,6 @@
 :: This file will fetch the most upto date dependencies
 
 
-rd AutoRepos /s /q
 ::                                     This is the url for the "64-bit Git for Windows Portable" download option from https://git-scm.com/download/win
 ::										If the link stops working you will just need to go and copy the most current one
 powershell -command "Invoke-WebRequest https://github.com/git-for-windows/git/releases/download/v2.34.1.windows.1/PortableGit-2.34.1-64-bit.7z.exe -Outfile gitinstall.exe"
@@ -11,6 +10,8 @@ PortableGit\bin\git.exe clone https://github.com/gabime/spdlog.git AutoRepos\spd
 PortableGit\bin\git.exe clone https://github.com/g-truc/glm.git AutoRepos\glm
 PortableGit\bin\git.exe clone https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git AutoRepos\VulkanMemoryAllocator
 PortableGit\bin\git.exe clone https://github.com/taskflow/taskflow.git AutoRepos\taskflow
+PortableGit\bin\git.exe clone https://github.com/KomputeProject/kompute.git AutoRepos\kompute
+PortableGit\bin\git.exe clone https://github.com/ocornut/imgui.git AutoRepos\imgui
 
 
 del glfw.zip /q

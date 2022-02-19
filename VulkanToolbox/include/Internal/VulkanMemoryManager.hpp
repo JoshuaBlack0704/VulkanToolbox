@@ -172,13 +172,16 @@ namespace vkt
 
 				auto newBufferAllocation = vom.VmaMakeBuffer(bufferCreateInfo, allocationCreateInfo, false);
 
-				cmdManager.Reset();
-				auto transferBuffer = cmdManager.RecordNew();
-				transferBuffer.begin(vk::CommandBufferBeginInfo({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit }));
-				transferBuffer.copyBuffer(bufferData.buffer, newBufferAllocation.buffer, copyOps.size(), copyOps.data());
-				transferBuffer.end();
-
-				cmdManager.Execute(true, wait, false, false);
+				if (copyOps.size() > 0)
+				{
+					cmdManager.Reset();
+					auto transferBuffer = cmdManager.RecordNew();
+					transferBuffer.begin(vk::CommandBufferBeginInfo({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit }));
+					transferBuffer.copyBuffer(bufferData.buffer, newBufferAllocation.buffer, copyOps.size(), copyOps.data());
+					transferBuffer.end();
+					cmdManager.Execute(true, wait, false, false);
+				}
+				
 				vom.Manage(bufferData);
 				bufferData = newBufferAllocation;
 			}
@@ -196,7 +199,7 @@ namespace vkt
 
 		void Clear()
 		{
-			bufferCreateInfo.size = 0;
+			//bufferCreateInfo.size = 0;
 			sectors.clear();
 		}
 
@@ -204,7 +207,10 @@ namespace vkt
 		{
 			bufferCreateInfo.size = 0;
 			sectors.clear();
-			vom.Manage(bufferData);
+			if (bufferData.buffer != NULL)
+			{
+				vom.Manage(bufferData);
+			}
 			vom.DisposeAll();
 		}
 
@@ -985,12 +991,16 @@ namespace vkt
 		{
 			cmdManager.DependsOn({wait});
 		}
-		void Clear()
+		void Clear(bool freeInternalBuffer = true)
 		{
 			steps.clear();
 			transferData = TransferData();
 			cmdManager.Reset();
-			transferBuffer.Free();
+			transferBuffer.Clear();
+			if (freeInternalBuffer)
+			{
+				transferBuffer.Free();
+			}
 		};
 
 		void Execute(std::vector<WaitData> transientWaits = {}, bool wait = false, bool useNormalSignal = false, bool useNormalWaits = false)
