@@ -211,7 +211,7 @@ namespace vkt
 			{
 				vom.Manage(bufferData);
 			}
-			vom.DisposeAll();
+			vom.DestroyAll();
 		}
 
 		~BufferManager()

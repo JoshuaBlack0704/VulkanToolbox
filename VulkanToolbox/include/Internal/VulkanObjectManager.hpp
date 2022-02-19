@@ -49,6 +49,7 @@ namespace vkt
 
 		vk::Format imageFormat;
 		vk::ImageLayout layout;
+		vk::Extent3D extent;
 	};
 
 	/**
@@ -581,6 +582,7 @@ namespace vkt
 			VkImageCreateInfo _imageInfo = (VkImageCreateInfo)imageInfo;
 			_imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			imageData.layout = imageInfo.initialLayout;
+			imageData.extent = imageInfo.extent;
 			vmaCreateImage(GetAllocator(), &_imageInfo, &allocationCreateInfo, &image, &imageData.allocation, &imageData.allocationInfo);
 			imageData.image = image;
 			viewInfo.image = imageData.image;
@@ -627,6 +629,16 @@ namespace vkt
 			return imageData;
 
 		}
+		vk::Sampler MakeImageSampler(vk::SamplerCreateInfo createInfo, bool manage = true)
+		{
+			vk::Sampler sampler = GetDevice().createSampler(createInfo);
+			if(manage)
+			{
+				Manage(sampler);
+			}
+			return sampler;
+		}
+
 
 		void TransitionImages(vk::CommandBuffer cmd, std::vector<vk::ImageMemoryBarrier> imageTransitions, vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage)
 		{
@@ -775,6 +787,11 @@ namespace vkt
 			assert(image.image != NULL);
 
 			vmaImagesToDestroy.emplace_back(image);
+		}
+		void Manage(vk::Sampler sampler)
+		{
+			assert(sampler != NULL);
+			samplersToDestroy.emplace_back(sampler);
 		}
 
 		void DestroyType(vk::Framebuffer)
@@ -947,8 +964,17 @@ namespace vkt
 				vmaImagesToDestroy.pop_back();
 			}
 		}
+		void DestroyType(vk::Sampler)
+		{
+			while (!samplersToDestroy.empty())
+			{
+				GetDevice().destroySampler(samplersToDestroy.back());
+				samplersToDestroy.pop_back();
+			}
+		}
 
-		void DisposeAll()
+
+		void DestroyAll()
 		{
 			DestroyType(vk::Semaphore());
 			DestroyType(vk::Fence());
@@ -962,6 +988,7 @@ namespace vkt
 			DestroyType(vk::DeviceMemory());
 			DestroyType(vk::DescriptorPool());
 			DestroyType(vk::DescriptorSetLayout());
+			DestroyType(vk::Sampler());
 			DestroyType(vk::Image());
 			DestroyType(vk::ImageView());
 			DestroyType(VmaBuffer());
@@ -974,7 +1001,7 @@ namespace vkt
 		}
 		~VulkanObjectManager()
 		{
-			DisposeAll();
+			DestroyAll();
 		}
 	private:
 		vk::Device device;
@@ -1009,6 +1036,7 @@ namespace vkt
 		std::deque<VmaImage> vmaImagesToDestroy;
 		std::deque<vk::ShaderModule> shaderModulesToDestroy;
 		std::deque<vk::Framebuffer> framebuffersToDestroy;
+		std::deque<vk::Sampler> samplersToDestroy;
 		SwapchainData swapchainData;
 	};
 

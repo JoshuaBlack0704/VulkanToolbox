@@ -150,7 +150,7 @@ namespace vkt
 
 		void Dispose()
 		{
-			vom.DisposeAll();
+			vom.DestroyAll();
 		}
 	private:
 		VulkanObjectManager vom;

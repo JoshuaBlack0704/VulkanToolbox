@@ -653,7 +653,7 @@ int main()
 			if (window.resized)
 			{
 				window.resized = false;
-				graphicsPipeline->vom.DisposeAll();
+				graphicsPipeline->vom.DestroyAll();
 				graphicsPipeline = CreatePresentation(vom, bootDevice, renderpassManager, graphicsSet, { lightPush2, camPush2 });
 			}
 

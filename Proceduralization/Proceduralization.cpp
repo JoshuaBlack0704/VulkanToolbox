@@ -395,7 +395,7 @@ int main()
 		bootDevice.surface = window.surface;
 
 		vkb::PhysicalDeviceSelector physicalDeviceSelector(bootInstance);
-		VkPhysicalDeviceFeatures features{};
+		VkPhysicalDeviceFeatures features{}; features.samplerAnisotropy = VK_TRUE;
 		VkPhysicalDeviceVulkan11Features features11{};
 		VkPhysicalDeviceVulkan12Features features12{}; features12.timelineSemaphore = VK_TRUE; 
 		VkPhysicalDeviceVulkan13Features features13{}; features13.dynamicRendering = VK_TRUE;
@@ -474,26 +474,44 @@ int main()
 		pVom.SetAllocator(vom.GetAllocator());
 		pVom.SetGraphicsQueue(vom.GetGraphicsQueue());
 		vkt::VmaImage depthImage;
+		vk::Sampler depthImageSampler;
 		vk::Pipeline graphicsPipeline;
 		vk::PipelineLayoutCreateInfo gPipelineLayoutCreateInfo;
 		vk::PipelineLayout gPipelineLayout;
 		vkt::RenderPassManager renderpassManager(vom.GetDevice());
+		vk::SamplerCreateInfo samplerCreate{};
+		samplerCreate.magFilter = vk::Filter::eLinear;
+		samplerCreate.minFilter = vk::Filter::eLinear;
+		samplerCreate.addressModeU = vk::SamplerAddressMode::eRepeat;
+		samplerCreate.addressModeV = vk::SamplerAddressMode::eRepeat;
+		samplerCreate.addressModeW = vk::SamplerAddressMode::eRepeat;
+		samplerCreate.anisotropyEnable = VK_TRUE;
+		samplerCreate.maxAnisotropy = pVom.GetPhysicalDevice().getProperties().limits.maxSamplerAnisotropy;
+		samplerCreate.borderColor = vk::BorderColor::eIntOpaqueBlack;
+		samplerCreate.unnormalizedCoordinates = VK_FALSE;
+		samplerCreate.compareEnable = VK_FALSE;
+		samplerCreate.compareOp = vk::CompareOp::eAlways;
+		samplerCreate.mipmapMode = vk::SamplerMipmapMode::eLinear;
+		depthImageSampler = pVom.MakeImageSampler(samplerCreate);
 
-		auto BuildPresentationData = [&pVom, &depthImage](GLFWwindow* window,int,int)
+
+		auto BuildPresentationData = [&pVom, &depthImage, &depthImageSampler](GLFWwindow* window,int,int)
 		{
 			if (!glfwGetWindowAttrib(window, GLFW_ICONIFIED))
 			{
 				vkb::SwapchainBuilder swapchainBuilder(pVom.GetPhysicalDevice(), pVom.GetDevice(), pVom.GetSurface());
 				auto ret = swapchainBuilder.set_old_swapchain(pVom.GetSwapchainData(true).GetSwapchain()).build();
-				pVom.DisposeAll();
+				spdlog::info("Shaw chain builder chose format: {}", ret->image_format);
+				pVom.DestroyAll();
 				assert(ret);
 				pVom.SetSwapchain(ret->swapchain, static_cast<vk::Format>(ret->image_format), ret->extent, true);
 				auto gQueue = pVom.GetGraphicsQueue();
+				vk::Format depthFormat = vk::Format::eD32Sfloat;
 				depthImage = pVom.VmaMakeImage(
 					vk::ImageCreateInfo(
 						{},
 						vk::ImageType::e2D,
-						vk::Format::eD32Sfloat,
+						depthFormat,
 						vk::Extent3D(
 							ret->extent.width,
 							ret->extent.height,
@@ -511,7 +529,7 @@ int main()
 						{},
 						{},
 						vk::ImageViewType::e2D,
-						vk::Format::eD32Sfloat,
+						depthFormat,
 						vk::ComponentMapping(),
 						vk::ImageSubresourceRange(
 							vk::ImageAspectFlagBits::eDepth,
@@ -522,6 +540,7 @@ int main()
 					VmaAllocationCreateInfo{
 						{},
 						VMA_MEMORY_USAGE_GPU_ONLY });
+				
 			}
 		};
 		auto BuildGraphicsPipeline = [&pVom, &graphicsPipeline, &depthImage, &gPipelineLayoutCreateInfo, &gPipelineLayout](GLFWwindow* window,int,int)
@@ -849,7 +868,6 @@ int main()
 
 		vkt::ComputePipelineManager stateUpdate(vom, vk::PipelineLayoutCreateInfo({}, 1, &stateUpdateSet->layout, 1, &countRange), "shaders/stateupdate.spv");
 
-
 		vkt::MemoryOperationsBuffer frameOps(vom);
 		uint32_t imageIndex = 0;
 		auto imgAvailable = vom.MakeSemaphore();
@@ -922,11 +940,11 @@ int main()
 				vk::ClearValue depthClear(vk::ClearDepthStencilValue(1, {}));
 				vk::RenderingAttachmentInfo colorAttachment(
 					currentImage.view,
-					vk::ImageLayout::eAttachmentOptimal,
+					vk::ImageLayout::eColorAttachmentOptimal,
 					{},
 					{},
 					{},
-					vk::AttachmentLoadOp::eClear,
+					vk::AttachmentLoadOp::eLoad,
 					vk::AttachmentStoreOp::eStore,
 					colorClear);
 				vk::RenderingAttachmentInfoKHR depthAttachment(
@@ -936,7 +954,7 @@ int main()
 					{},
 					{},
 					vk::AttachmentLoadOp::eClear,
-					vk::AttachmentStoreOp::eStore,
+					vk::AttachmentStoreOp::eNone,
 					depthClear
 				);
 				vk::RenderingInfoKHR renderingInfo(
