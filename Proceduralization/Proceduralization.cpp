@@ -474,6 +474,7 @@ int main()
 		pVom.SetAllocator(vom.GetAllocator());
 		pVom.SetGraphicsQueue(vom.GetGraphicsQueue());
 		vkt::VmaImage depthImage;
+		vkt::VmaImage depthImageCopy;
 		vk::Sampler depthImageSampler;
 		vk::Pipeline graphicsPipeline;
 		vk::PipelineLayoutCreateInfo gPipelineLayoutCreateInfo;
@@ -492,13 +493,19 @@ int main()
 		samplerCreate.compareEnable = VK_FALSE;
 		samplerCreate.compareOp = vk::CompareOp::eAlways;
 		samplerCreate.mipmapMode = vk::SamplerMipmapMode::eLinear;
-		depthImageSampler = pVom.MakeImageSampler(samplerCreate);
+		depthImageSampler = vom.MakeImageSampler(samplerCreate);
+		std::shared_ptr<uint64_t> resizeCount = std::make_shared<uint64_t>(0);
+		vkt::DescriptorManager descriptorManager(vom);
+		auto stateUpdateSet = descriptorManager.GetNewSet();
+		auto graphicsSet = descriptorManager.GetNewSet();
 
 
-		auto BuildPresentationData = [&pVom, &depthImage, &depthImageSampler](GLFWwindow* window,int,int)
+
+		auto BuildPresentationData = [&pVom, &depthImage, &depthImageCopy, &resizeCount](GLFWwindow* window,int,int)
 		{
 			if (!glfwGetWindowAttrib(window, GLFW_ICONIFIED))
 			{
+				*resizeCount = *resizeCount + 1;
 				vkb::SwapchainBuilder swapchainBuilder(pVom.GetPhysicalDevice(), pVom.GetDevice(), pVom.GetSurface());
 				auto ret = swapchainBuilder.set_old_swapchain(pVom.GetSwapchainData(true).GetSwapchain()).build();
 				spdlog::info("Shaw chain builder chose format: {}", ret->image_format);
@@ -520,7 +527,7 @@ int main()
 						1,
 						vk::SampleCountFlagBits::e1,
 						vk::ImageTiling::eOptimal,
-						vk::ImageUsageFlagBits::eDepthStencilAttachment,
+						vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
 						vk::SharingMode::eExclusive,
 						1,
 						&gQueue.index,
@@ -540,9 +547,44 @@ int main()
 					VmaAllocationCreateInfo{
 						{},
 						VMA_MEMORY_USAGE_GPU_ONLY });
+
+				depthImageCopy = pVom.VmaMakeImage(
+					vk::ImageCreateInfo(
+						{},
+						vk::ImageType::e2D,
+						depthFormat,
+						vk::Extent3D(
+							ret->extent.width,
+							ret->extent.height,
+							1),
+						1,
+						1,
+						vk::SampleCountFlagBits::e1,
+						vk::ImageTiling::eOptimal,
+						vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
+						vk::SharingMode::eExclusive,
+						1,
+						&gQueue.index,
+						vk::ImageLayout::eDepthStencilReadOnlyOptimal),
+					vk::ImageViewCreateInfo(
+						{},
+						{},
+						vk::ImageViewType::e2D,
+						depthFormat,
+						vk::ComponentMapping(),
+						vk::ImageSubresourceRange(
+							vk::ImageAspectFlagBits::eDepth,
+							0,
+							1,
+							0,
+							1)),
+					VmaAllocationCreateInfo{
+						{},
+						VMA_MEMORY_USAGE_GPU_ONLY });
 				
 			}
 		};
+		auto BuildPresentaionDependentDescrtiptors = [&descriptorManager, &gPipelineLayoutCreateInfo, &graphicsSet](GLFWwindow* window, int, int) {descriptorManager.Update(); gPipelineLayoutCreateInfo.pSetLayouts = &graphicsSet->layout; };
 		auto BuildGraphicsPipeline = [&pVom, &graphicsPipeline, &depthImage, &gPipelineLayoutCreateInfo, &gPipelineLayout](GLFWwindow* window,int,int)
 		{
 			if (!glfwGetWindowAttrib(window, GLFW_ICONIFIED))
@@ -788,6 +830,7 @@ int main()
 			}
 		};
 		window.AttachResizeAction(BuildPresentationData);
+		window.AttachResizeAction(BuildPresentaionDependentDescrtiptors);
 		window.AttachResizeAction(BuildGraphicsPipeline);
 
 		BuildPresentationData(window.window, {}, {});
@@ -849,16 +892,14 @@ int main()
 
 		}
 
-		vkt::DescriptorManager descriptorManager(vom);
-		auto stateUpdateSet = descriptorManager.GetNewSet();
 		stateUpdateSet->AttachSector(positionsSector, vk::ShaderStageFlagBits::eCompute);
 		stateUpdateSet->AttachSector(staticsSector, vk::ShaderStageFlagBits::eCompute);
 		stateUpdateSet->AttachSector(matrixSector, vk::ShaderStageFlagBits::eCompute);
 		stateUpdateSet->AttachSector(camdataSector, vk::ShaderStageFlagBits::eCompute);
 		stateUpdateSet->AttachSector(modelMatrixSector, vk::ShaderStageFlagBits::eCompute);
-		auto graphicsSet = descriptorManager.GetNewSet();
 		graphicsSet->AttachSector(matrixSector, vk::ShaderStageFlagBits::eVertex);
 		graphicsSet->AttachSector(modelMatrixSector, vk::ShaderStageFlagBits::eVertex);
+		graphicsSet->AddDescriptor(vk::DescriptorType::eCombinedImageSampler, resizeCount, vk::ShaderStageFlagBits::eFragment, &depthImageCopy.layout, &depthImageCopy.view, &depthImageSampler);
 		descriptorManager.Update();
 		LightData lightData{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(-1.0f,1.0f,1.0f), glm::vec3(1.0f,1.0f,1.0f), 1.0f, 0.1f};
 		vk::PushConstantRange lightRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(lightData));
@@ -908,7 +949,16 @@ int main()
 				imageIndex = vom.GetDevice().acquireNextImageKHR(pVom.GetSwapchainData().GetSwapchain(), UINT64_MAX, imgAvailable).value;
 				frameOps.Clear(true);
 				frameOps.RamToSector(&camData, camdataSector, sizeof(camData));
+				vk::ImageCopy depthImageCopyOp(
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1),
+					{},
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1),
+					{},
+					depthImage.extent
+				);
+				//frameOps.ImageToImage(depthImage.image, depthImageCopy.image, depthImage.layout, depthImageCopy.layout, depthImageCopyOp, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1));
 				frameOps.Execute();
+				descriptorManager.Update();
 				cmdManager.Reset();
 				auto cmd = cmdManager.RecordNew();
 				cmd.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));

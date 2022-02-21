@@ -402,42 +402,30 @@ namespace vkt
 			vk::ImageMemoryBarrier srcImageTransition(vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eTransferWrite, srcImageLayout, vk::ImageLayout::eTransferSrcOptimal,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
 			vk::ImageMemoryBarrier dstImageTransition(vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eTransferWrite, dstImageLayout, vk::ImageLayout::eTransferDstOptimal,
-				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
+				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, dstImage, subresourceRange);
 
 			vk::ImageMemoryBarrier srcImageDeTransition(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eNoneKHR, vk::ImageLayout::eTransferSrcOptimal, srcImageLayout,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
 			vk::ImageMemoryBarrier dstImageDeTransition(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eNoneKHR, vk::ImageLayout::eTransferDstOptimal, dstImageLayout,
-				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
+				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, dstImage, subresourceRange);
 
-
+			vk::ImageMemoryBarrier transitionsBarriers[] = { srcImageTransition, dstImageTransition };
 			cmd.pipelineBarrier(
 				vk::PipelineStageFlagBits::eTransfer,
 				vk::PipelineStageFlagBits::eTransfer,
 				{},
 				0, {},
 				0, {},
-				1, &srcImageTransition);
-			cmd.pipelineBarrier(
-				vk::PipelineStageFlagBits::eTransfer,
-				vk::PipelineStageFlagBits::eTransfer,
-				{},
-				0, {},
-				0, {},
-				1, &dstImageTransition);
+				2, transitionsBarriers);
 			cmd.copyImage(srcImage, vk::ImageLayout::eTransferSrcOptimal, dstImage, vk::ImageLayout::eTransferDstOptimal, 1, &imageCopy);
-			cmd.pipelineBarrier(
-				vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-				{},
-				0, {},
-				0, {},
-				1, &srcImageDeTransition);
-			cmd.pipelineBarrier(
-				vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-				{},
-				0, {},
-				0, {},
-				1, &dstImageDeTransition);
+			vk::ImageMemoryBarrier DeTransitionsBarriers[] = { srcImageDeTransition, dstImageDeTransition };
 
+			cmd.pipelineBarrier(
+				vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+				{},
+				0, {},
+				0, {},
+				2, DeTransitionsBarriers);
 			return {};
 		}
 
@@ -900,6 +888,31 @@ namespace vkt
 				auto& step = steps.back();
 				step.transferIndecies.emplace_back(transfer.index);
 				step.dstSectors.emplace_back(transfer.AsImageToSector().dstSector);
+			}
+			else if (transfer.IsImageToImage())
+			{
+				for (auto& step : steps)
+				{
+					bool noDependency = true;
+					for (auto& dstImage : step.dstImages)
+					{
+						if (dstImage == transfer.AsImageToImage().srcImage)
+						{
+							noDependency = false;
+							break;
+						}
+					}
+					if (noDependency)
+					{
+						step.transferIndecies.emplace_back(transfer.index);
+						step.dstImages.emplace_back(transfer.AsImageToImage().dstImage);
+						return;
+					}
+				}
+				steps.emplace_back();
+				auto& step = steps.back();
+				step.transferIndecies.emplace_back(transfer.index);
+				step.dstImages.emplace_back(transfer.AsImageToImage().dstImage);
 			}
 			
 		}

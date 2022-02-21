@@ -196,6 +196,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CompileShaders.bat" />
+    <None Include="DepthRender.frag" />
+    <None Include="DepthRender.vert" />
     <None Include="RandomGen.comp" />
     <None Include="SimpleTriangle.frag" />
     <None Include="SimpleTriangle.vert" />

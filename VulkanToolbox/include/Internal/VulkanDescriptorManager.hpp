@@ -3,67 +3,161 @@ namespace vkt
 {
 	//The descriptor manager's update function will allocate sets if needed and then will ask the set managers if they need a rewrite
 	//if so the manager will aquire the write data for the set from the set and then perform the rewrite
-	//A rewrite is needed if an sector descriptor no longer has a matching version number with its sector's buffer manager
+	//A rewrite is needed if an sector descriptor no longer has a matching versions number with its sector's buffer manager
 	// meaning the sectors buffer and offset and maybe even size has changed
 
-	struct SectorDescriptorEntity
+	struct BufferDescriptorEntity
 	{
-		SectorDescriptorEntity(int64_t& versionPtr, std::shared_ptr<SectorData>& sectorPtr, vk::DescriptorSetLayoutBinding& bindingPtr,
-			vk::WriteDescriptorSet& writePtr, vk::DescriptorBufferInfo& bInfoPtr) : version(versionPtr), sector(sectorPtr), binding(bindingPtr), write(writePtr), bInfo(bInfoPtr){}
-
-		int64_t& version;
-		std::shared_ptr<SectorData>& sector;
-		vk::DescriptorSetLayoutBinding& binding;
-		vk::WriteDescriptorSet& write;
+		const uint64_t index;
+		vk::DescriptorType& type;
+		std::shared_ptr<uint64_t>& srcVersion;
+		uint64_t& version;
+		vk::ShaderStageFlags& targetStage;
 		vk::DescriptorBufferInfo& bInfo;
+
+		BufferDescriptorEntity(
+			const uint64_t index,
+			vk::DescriptorType& type,
+			std::shared_ptr<uint64_t>& srcVersion,
+			uint64_t& version,
+			vk::ShaderStageFlags& targetStage,
+			vk::DescriptorBufferInfo& bInfo
+		)
+			: index(index), type(type), srcVersion(srcVersion), version(version), targetStage(targetStage), bInfo(bInfo){};
+	};
+
+	struct ImageDescriptorEntity
+	{
+		uint64_t const index;
+		vk::DescriptorType& type;
+		std::shared_ptr<uint64_t>& srcVersion;
+		uint64_t& version;
+		vk::ShaderStageFlags& targetStage;
+		vk::DescriptorImageInfo& iInfo;
+
+		ImageDescriptorEntity(
+			const uint64_t index,
+			vk::DescriptorType& type,
+			std::shared_ptr<uint64_t>& srcVersion,
+			uint64_t& version,
+			vk::ShaderStageFlags& targetStage,
+			vk::DescriptorImageInfo& iInfo
+		)
+			: index(index), type(type), srcVersion(srcVersion), version(version), targetStage(targetStage), iInfo(iInfo){};
+	};
+
+	struct DescriptorEntity
+	{
+		uint64_t const index;
+		vk::DescriptorType type;
+		std::shared_ptr<uint64_t> srcVersion;
+		uint64_t version;
+		vk::ShaderStageFlags targetStage;
+		vk::Buffer* buffer;
+		uint64_t* allocationOffset;
+		uint64_t* range;
+		vk::ImageLayout* imageLayout;
+		vk::ImageView* view;
+		vk::Sampler* sampler;
+		vk::DescriptorBufferInfo& bInfo;
+		vk::DescriptorImageInfo& iInfo;
+
+		DescriptorEntity(
+			uint64_t const index,
+			vk::DescriptorType type,
+			std::shared_ptr<uint64_t> srcVersion,
+			uint64_t version,
+			vk::ShaderStageFlags targetStage,
+			vk::Buffer* buffer,
+			uint64_t* allocationOffset,
+			uint64_t* range,
+			vk::ImageLayout* imageLayout,
+			vk::ImageView* view,
+			vk::Sampler* sampler,
+			vk::DescriptorBufferInfo& bInfo,
+			vk::DescriptorImageInfo& iInfo
+		)
+			:
+		index(index),
+		type(type),
+		srcVersion(srcVersion),
+		version(version),
+		targetStage(targetStage),
+		buffer(buffer),
+		allocationOffset(allocationOffset),
+		range(range),
+		imageLayout(imageLayout),
+		view(view),
+		sampler(sampler),
+		bInfo(bInfo),
+		iInfo(iInfo){};
+
+		BufferDescriptorEntity AsBufferDescriptor()
+		{
+			assert(buffer != nullptr);
+			assert(allocationOffset != nullptr);
+			assert(range != nullptr);
+			bInfo = vk::DescriptorBufferInfo(*buffer, *allocationOffset, *range);
+			return BufferDescriptorEntity(index, type, srcVersion, version, targetStage, bInfo);
+		}
+		ImageDescriptorEntity AsImageDescriptor()
+		{
+			assert(view != nullptr);
+			assert(sampler != nullptr);
+			assert(imageLayout != nullptr);
+			iInfo = vk::DescriptorImageInfo(*sampler, *view, *imageLayout);
+			return ImageDescriptorEntity(index, type, srcVersion, version, targetStage, iInfo);
+		}
+		bool IsBufferDescriptor()
+		{
+			return buffer != nullptr && allocationOffset != nullptr && range != nullptr;
+		}
+		bool IsImageDescriptor()
+		{
+			return imageLayout != nullptr && view != nullptr && sampler != nullptr;
+		}
 	};
 
 	//This is a data oriented approach!
 	struct SectorDescriptorData
 	{
-		SectorDescriptorData(uint64_t count)
+		std::vector <vk::DescriptorType> types;
+		std::vector <std::shared_ptr<uint64_t>> srcVersions;
+		std::vector <uint64_t> versions;
+		std::vector<vk::ShaderStageFlags> targetStages;
+		std::vector<vk::Buffer*> buffers;
+		std::vector<uint64_t*> allocationOffsets;
+		std::vector<uint64_t*> ranges;
+		std::vector<vk::ImageLayout*> imageLayouts;
+		std::vector<vk::ImageView*> views;
+		std::vector<vk::Sampler*> samplers;
+		std::vector<vk::DescriptorBufferInfo> bInfos;
+		std::vector<vk::DescriptorImageInfo> iInfos;
+
+
+		DescriptorEntity operator[](uint64_t index)
 		{
-			version.resize(count);
-			sector.resize(count);
-			binding.resize(count);
-			write.resize(count);
-			bInfo.resize(count);
+			return DescriptorEntity(index, types[index], srcVersions[index], versions[index], targetStages[index], buffers[index], allocationOffsets[index], ranges[index], imageLayouts[index], views[index], samplers[index], bInfos[index], iInfos[index]);
 		}
-		SectorDescriptorData() = default;
-
-		std::vector<int64_t> version;
-		std::vector < std::shared_ptr<SectorData>> sector;
-		std::vector < vk::DescriptorSetLayoutBinding> binding;
-		std::vector < vk::WriteDescriptorSet> write;
-		std::vector < vk::DescriptorBufferInfo> bInfo;
-
-		SectorDescriptorEntity operator[](uint64_t index)
+		DescriptorEntity EmplaceBack(vk::DescriptorType type, std::shared_ptr<uint64_t> srcVersion, vk::ShaderStageFlags targetStage, vk::Buffer* buffer, uint64_t* allocationOffset, uint64_t* range, vk::ImageLayout* layout, vk::ImageView* view, vk::Sampler* sampler)
 		{
-			return SectorDescriptorEntity(version[index], sector[index], binding[index], write[index], bInfo[index]);
-		}
-		SectorDescriptorEntity EmplaceBack(std::shared_ptr<SectorData> _sector, vk::ShaderStageFlags targetStage)
-		{
-			vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
-			auto bufferType = _sector->bufferAllocation->bufferCreateInfo.usage;
-			if (bufferType & vk::BufferUsageFlagBits::eStorageBuffer)
-			{
-				type = vk::DescriptorType::eStorageBuffer;
-			}
-			else if (bufferType & vk::BufferUsageFlagBits::eUniformBuffer)
-			{
-				type = vk::DescriptorType::eUniformBuffer;
-			}
-
-			version.emplace_back(-1);
-			sector.emplace_back(_sector);
-			binding.emplace_back(vk::DescriptorSetLayoutBinding(binding.size(), type, 1, targetStage));
-			bInfo.emplace_back();
-			write.emplace_back();
-			return SectorDescriptorEntity(version.back(), sector.back(), binding.back(), write.back(), bInfo.back());
+			types.emplace_back(type);
+			srcVersions.emplace_back(srcVersion);
+			versions.emplace_back(-1);
+			targetStages.emplace_back(targetStage);
+			buffers.emplace_back(buffer);
+			allocationOffsets.emplace_back(allocationOffset);
+			ranges.emplace_back(range);
+			imageLayouts.emplace_back(layout);
+			views.emplace_back(view);
+			samplers.emplace_back(sampler);
+			bInfos.emplace_back();
+			iInfos.emplace_back();
+			return DescriptorEntity(types.size(), types.back(), srcVersions.back(), versions.back(), targetStages.back(), buffers.back(), allocationOffsets.back(), ranges.back(), imageLayouts.back(), views.back(), samplers.back(), bInfos.back(), iInfos.back());
 		}
 		uint32_t size()
 		{
-			return version.size();
+			return versions.size();
 		}
 	};
 
@@ -73,11 +167,13 @@ namespace vkt
 		vk::DescriptorSet set = nullptr;
 		uint32_t layoutBindingCount = 0;
 		vk::DescriptorSetLayout layout;
+		std::vector < vk::DescriptorSetLayoutBinding > bindings;
+		std::vector<vk::WriteDescriptorSet> writes;
 		bool NeedsRewrite()
 		{
 			for (size_t i = 0; i < descData.size(); i++)
 			{
-				if (descData.version[i] != descData.sector[i]->bufferAllocation->cmdManager.GetSubmitCount())
+				if (descData.versions[i] != *descData.srcVersions[i])
 				{
 					return true;
 				}
@@ -88,10 +184,31 @@ namespace vkt
 		{
 			return set == NULL || layoutBindingCount != descData.size();
 		}
+		void AddDescriptor(vk::DescriptorType type, std::shared_ptr<uint64_t> srcVersion, vk::ShaderStageFlags targetStage, vk::Buffer* buffer, uint64_t* offset, uint64_t* range)
+		{
+			descData.EmplaceBack(type, srcVersion, targetStage, buffer, offset, range, nullptr, nullptr, nullptr);
+		}
+		void AddDescriptor(vk::DescriptorType type, std::shared_ptr<uint64_t> srcVersion, vk::ShaderStageFlags targetStage, vk::ImageLayout* layout, vk::ImageView* view, vk::Sampler* sampler)
+		{
+			descData.EmplaceBack(type, srcVersion, targetStage, nullptr, nullptr, nullptr, layout, view, sampler);
+		}
 		void AttachSector(std::shared_ptr<SectorData> sector, vk::ShaderStageFlags targetStage)
 		{
-			descData.version.resize(descData.version.size(), -1);
-			descData.EmplaceBack(sector, targetStage);
+			auto bufferType = sector->bufferAllocation->bufferCreateInfo.usage;
+			vk::DescriptorType descType = vk::DescriptorType::eStorageBuffer;
+			assert(bufferType & vk::BufferUsageFlagBits::eStorageBuffer || bufferType & vk::BufferUsageFlagBits::eUniformBuffer);
+			if (bufferType & vk::BufferUsageFlagBits::eStorageBuffer)
+			{
+				descType = vk::DescriptorType::eStorageBuffer;
+			}
+			else if(bufferType & vk::BufferUsageFlagBits::eUniformBuffer)
+			{
+				descType = vk::DescriptorType::eUniformBuffer;
+			}
+
+
+
+			AddDescriptor(descType, sector->bufferAllocation->cmdManager.GetSubmitCountPtr(), targetStage, &sector->bufferAllocation->bufferData.buffer, &sector->allocationOffset, &sector->neededSize);
 		}
 		void ProduceTypeCounts(std::vector<vk::DescriptorPoolSize>& typeCounts)
 		{
@@ -100,7 +217,7 @@ namespace vkt
 				bool foundType = false;
 				for (auto& type : typeCounts)
 				{
-					if (descData.binding[i].descriptorType == type.type)
+					if (descData.types[i] == type.type)
 					{
 						type.descriptorCount++;
 						foundType = true;
@@ -109,24 +226,44 @@ namespace vkt
 				}
 				if (!foundType)
 				{
-					typeCounts.emplace_back(vk::DescriptorPoolSize(descData.binding[i].descriptorType, 1));
+					typeCounts.emplace_back(vk::DescriptorPoolSize(descData.types[i], 1));
 				}
 			}
 		}
 		vk::DescriptorSetLayoutCreateInfo ProduceSetLayout()
 		{
-			return vk::DescriptorSetLayoutCreateInfo({}, descData.size(), descData.binding.data());
+			if (bindings.size() != descData.size())
+			{
+				bindings.resize(descData.size());
+				bindings.clear();
+				for (size_t i = 0; i < descData.size(); i++)
+				{
+					auto desc = descData[i];
+					bindings.emplace_back(vk::DescriptorSetLayoutBinding(desc.index, desc.type, 1, desc.targetStage) );
+				}
+			}
+			return vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data());
 		}
 		std::vector<vk::WriteDescriptorSet>& Write()
 		{
+			writes.resize(descData.size());
+			writes.clear();
 			for (size_t i = 0; i < descData.size(); i++)
 			{
 				auto desc = descData[i];
-				desc.bInfo = vk::DescriptorBufferInfo(desc.sector->bufferAllocation->bufferData.buffer, desc.sector->allocationOffset, desc.sector->neededSize);
-				desc.write = vk::WriteDescriptorSet(set, desc.binding.binding, 0, 1, desc.binding.descriptorType, {}, &desc.bInfo, {});
-				desc.version = desc.sector->bufferAllocation->cmdManager.GetSubmitCount();
+				desc.version = *desc.srcVersion;
+				if (desc.IsBufferDescriptor())
+				{
+					auto buffDesc = desc.AsBufferDescriptor();
+					writes.emplace_back(vk::WriteDescriptorSet(set, buffDesc.index, 0, 1, buffDesc.type, {}, &buffDesc.bInfo, {}));
+				}
+				else if (desc.IsImageDescriptor())
+				{
+					auto imgDesc = desc.AsImageDescriptor();
+					writes.emplace_back(vk::WriteDescriptorSet(set, imgDesc.index, 0, 1, imgDesc.type, &imgDesc.iInfo, {}, {}));
+				}
 			}
-			return descData.write;
+			return writes;
 
 		}
 	};

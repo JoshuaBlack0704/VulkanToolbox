@@ -653,6 +653,27 @@ namespace vkt
 				imageTransitions.size(),
 				imageTransitions.data());
 		}
+		void TransitionImages(std::vector<vk::ImageMemoryBarrier> imageTransitions, vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage)
+		{
+			auto pool = MakeCommandPool(vk::CommandPoolCreateInfo({}, GetGraphicsQueue().index), false);
+			auto cmd = MakeCommandBuffers(vk::CommandBufferAllocateInfo(pool, vk::CommandBufferLevel::ePrimary, 1))[0];
+			cmd.begin(vk::CommandBufferBeginInfo());
+			TransitionImages(cmd, imageTransitions, srcStage, dstStage);
+			cmd.end();
+			auto fence = MakeFence(false, false);
+			vk::SubmitInfo submit(
+				{},
+				{},
+				{},
+				1,
+				&cmd,
+				{},
+				{});
+			auto res = GetGraphicsQueue().queue.submit(1, &submit, fence);
+			res = GetDevice().waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
+			GetDevice().destroyFence(fence);
+			GetDevice().destroyCommandPool(pool);
+		}
 
 		vk::ShaderModule MakeShaderModule(const char* shaderPath, bool manage = true)
 		{

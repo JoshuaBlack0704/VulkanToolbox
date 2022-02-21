@@ -25,3 +25,13 @@ glslc.exe SimpleTriangle.vert -o Builds\Release\x64\shaders\simpletrianglevert.s
 glslc.exe SimpleTriangle.frag -o shaders\simpletrianglefrag.spv
 glslc.exe SimpleTriangle.frag -o Builds\Debug\x64\shaders\simpletrianglefrag.spv
 glslc.exe SimpleTriangle.frag -o Builds\Release\x64\shaders\simpletrianglefrag.spv
+
+glslc.exe DepthRender.vert -o shaders\depthrendervert.spv
+glslc.exe DepthRender.vert -o Builds\Debug\x64\shaders\depthrendervert.spv
+glslc.exe DepthRender.vert -o Builds\Release\x64\shaders\depthrendervert.spv
+
+glslc.exe DepthRender.frag -o shaders\depthrenderfrag.spv
+glslc.exe DepthRender.frag -o Builds\Debug\x64\shaders\depthrenderfrag.spv
+glslc.exe DepthRender.frag -o Builds\Release\x64\shaders\depthrenderfrag.spv
+
+pause
