@@ -3,7 +3,7 @@
 layout(location = 0) in vec2 texCoord;
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 2) uniform sampler2D TextureSampler;
+layout(set = 0, binding = 2) uniform sampler2D depthSampler;
 
 layout (push_constant) uniform data {
     vec3 lightColor;
@@ -14,6 +14,6 @@ layout (push_constant) uniform data {
 } lightData;
 
 void main() {
-	vec4 val = texture(TextureSampler, ivec2(texCoord));;
-    outColor = vec4(val.x, val.x, val.x, val.w);
+	vec4 depthVal = texture(depthSampler, texCoord);
+    outColor = vec4(depthVal.x, depthVal.x, depthVal.x, 1.0f);
 }

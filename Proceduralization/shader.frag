@@ -4,7 +4,7 @@ layout(location = 0) in vec3 inColor;
 layout(location = 1) in vec3 inNormal;
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 2) uniform sampler3D;
+//layout(binding = 2) uniform sampler3D;
 
 layout (push_constant) uniform data {
     vec3 lightColor;

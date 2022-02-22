@@ -12,7 +12,6 @@
 #include <spdlog/stopwatch.h>
 #undef MemoryBarrier
 
-
 class Character
 {
 public:
@@ -28,12 +27,15 @@ public:
 	glm::vec4 accel;
 	glm::vec4 center = glm::vec4(0, 0, 1, 1);
 	glm::vec3 rotAxis;
-	glm::mat4 rotMatrix = glm::mat4(1.0f);
+	glm::mat4 rotMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,0,1));
 	glm::mat4 transMatrix;
 	glm::vec4 target;
 	float& deltaTime;
 	float& timeSpeedFactor;
 	vkt::VulkanObjectManager& vom;
+	float PitchSpeed = 0;
+	float YawSpeed = 0;
+
 
 	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor)
 	{
@@ -58,17 +60,17 @@ public:
 		ctrlKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_PRESS, [&]() {accel[1] = 1; spdlog::info("Moving ship down"); });
 		ctrlKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_RELEASE, [&]() {accel[1] = 0;  vel[1] = 0; spdlog::info("Stopping ship"); });
 
-		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {     rotAxis[0] = 1; spdlog::info("Rotating ship up"); });
-		upKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {   rotAxis[0] = 0; spdlog::info("Stopping ship"); });
+		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {   PitchSpeed = 90; spdlog::info("Rotating ship up"); });
+		upKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {  PitchSpeed = 0;  spdlog::info("Stopping ship"); });
 
-		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { rotAxis[0] = -1; spdlog::info("Rotating ship down"); });
-		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { rotAxis[0] = 0; spdlog::info("Stopping ship"); });
+		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { PitchSpeed = -90; spdlog::info("Rotating ship down"); });
+		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { PitchSpeed = 0; spdlog::info("Stopping ship"); });
 
-		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { rotAxis[1] = -1; spdlog::info("Rotating ship left"); });
-		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { rotAxis[1] = 0; spdlog::info("Stopping ship"); });
+		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { YawSpeed = -90; spdlog::info("Rotating ship left"); });
+		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { YawSpeed = 0; spdlog::info("Stopping ship"); });
 
-		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() {rotAxis[1] = 1; spdlog::info("Rotating ship right"); });
-		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() {rotAxis[1] = 0; spdlog::info("Stopping ship"); });
+		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() { YawSpeed = 90; spdlog::info("Rotating ship right"); });
+		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() { YawSpeed = 0; spdlog::info("Stopping ship"); });
 
 		backspaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_BACKSPACE), GLFW_PRESS, [&]() {deltaTime *= -1; spdlog::info("Reversing time"); });
 		spaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_SPACE), GLFW_PRESS, [&]()
@@ -101,7 +103,7 @@ public:
 
 	}
 
-	Character* Move()
+	/*Character* Move()
 	{
 		if (rotAxis != glm::vec3(0))
 		{
@@ -114,16 +116,15 @@ public:
 		pos += rotMatrix * vel * glm::vec4(deltaTime, deltaTime, deltaTime, 1);
 
 		return this;
-	}
+	}*/
 	Character* Move(double _externalDeltaTime)
 	{
-		if (rotAxis != glm::vec3(0))
+		if (PitchSpeed != 0 || YawSpeed != 0)
 		{
-			rotMatrix = glm::rotate(rotMatrix, glm::radians(90 * static_cast<float>(_externalDeltaTime)), (rotAxis));
-			center = rotMatrix * glm::vec4(0, 0, 1, 1);
+			auto axis = glm::vec3(PitchSpeed, -YawSpeed, 0);
+			rotMatrix = glm::rotate(rotMatrix, glm::radians(90.0f*(float)_externalDeltaTime), axis);
 		}
-
-
+		
 		vel += accel;
 		pos += rotMatrix * vel * glm::vec4(_externalDeltaTime, _externalDeltaTime, _externalDeltaTime, 1);
 
@@ -134,8 +135,14 @@ public:
 		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
 		return glm::perspective(glm::radians(70.0f), aspect, .1f, 1000.0f);
 	}
+	glm::mat4 GetOMat()
+	{
+		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
+		return glm::ortho(0, 1920, 0, 1080);
+	}
 	glm::mat4 GetVMat()
 	{
+		return glm::transpose(rotMatrix) * glm::translate(glm::mat4(1.0f), glm::vec3(pos));
 		return glm::lookAt(static_cast<glm::vec3>(pos), static_cast<glm::vec3>(pos + center), glm::vec3(0, -1, 0));
 	}
 	glm::mat4 GetClipMat()
@@ -480,20 +487,6 @@ int main()
 		vk::PipelineLayoutCreateInfo gPipelineLayoutCreateInfo;
 		vk::PipelineLayout gPipelineLayout;
 		vkt::RenderPassManager renderpassManager(vom.GetDevice());
-		vk::SamplerCreateInfo samplerCreate{};
-		samplerCreate.magFilter = vk::Filter::eLinear;
-		samplerCreate.minFilter = vk::Filter::eLinear;
-		samplerCreate.addressModeU = vk::SamplerAddressMode::eRepeat;
-		samplerCreate.addressModeV = vk::SamplerAddressMode::eRepeat;
-		samplerCreate.addressModeW = vk::SamplerAddressMode::eRepeat;
-		samplerCreate.anisotropyEnable = VK_TRUE;
-		samplerCreate.maxAnisotropy = pVom.GetPhysicalDevice().getProperties().limits.maxSamplerAnisotropy;
-		samplerCreate.borderColor = vk::BorderColor::eIntOpaqueBlack;
-		samplerCreate.unnormalizedCoordinates = VK_FALSE;
-		samplerCreate.compareEnable = VK_FALSE;
-		samplerCreate.compareOp = vk::CompareOp::eAlways;
-		samplerCreate.mipmapMode = vk::SamplerMipmapMode::eLinear;
-		depthImageSampler = vom.MakeImageSampler(samplerCreate);
 		std::shared_ptr<uint64_t> resizeCount = std::make_shared<uint64_t>(0);
 		vkt::DescriptorManager descriptorManager(vom);
 		auto stateUpdateSet = descriptorManager.GetNewSet();
@@ -532,40 +525,6 @@ int main()
 						1,
 						&gQueue.index,
 						vk::ImageLayout::eDepthStencilAttachmentOptimal),
-					vk::ImageViewCreateInfo(
-						{},
-						{},
-						vk::ImageViewType::e2D,
-						depthFormat,
-						vk::ComponentMapping(),
-						vk::ImageSubresourceRange(
-							vk::ImageAspectFlagBits::eDepth,
-							0,
-							1,
-							0,
-							1)),
-					VmaAllocationCreateInfo{
-						{},
-						VMA_MEMORY_USAGE_GPU_ONLY });
-
-				depthImageCopy = pVom.VmaMakeImage(
-					vk::ImageCreateInfo(
-						{},
-						vk::ImageType::e2D,
-						depthFormat,
-						vk::Extent3D(
-							ret->extent.width,
-							ret->extent.height,
-							1),
-						1,
-						1,
-						vk::SampleCountFlagBits::e1,
-						vk::ImageTiling::eOptimal,
-						vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
-						vk::SharingMode::eExclusive,
-						1,
-						&gQueue.index,
-						vk::ImageLayout::eDepthStencilReadOnlyOptimal),
 					vk::ImageViewCreateInfo(
 						{},
 						{},
@@ -694,141 +653,6 @@ int main()
 				graphicsPipeline = pVom.MakePipeline({}, gCreateInfo);
 			}
 		};
-		auto BuildGraphicsPipelineWithRenderPass = [&pVom, &graphicsPipeline, &depthImage, &gPipelineLayoutCreateInfo, &gPipelineLayout, &renderpassManager](GLFWwindow* window, int, int)
-		{
-			if (!glfwGetWindowAttrib(window, GLFW_ICONIFIED))
-			{
-				auto vert = pVom.MakeShaderModule("shaders/vert.spv");
-				auto frag = pVom.MakeShaderModule("shaders/frag.spv");
-
-				std::vector<vk::PipelineShaderStageCreateInfo> shaders = {
-					vk::PipelineShaderStageCreateInfo({},vk::ShaderStageFlagBits::eVertex, vert, "main"),
-					vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eFragment, frag, "main") };
-
-				auto vertexBindings = VertexData::vertexInputBinding();
-				auto vertexAttributes = VertexData::vertexInputAttribute();
-
-				vk::PipelineVertexInputStateCreateInfo vertexState(
-					{},
-					vertexBindings.size(),
-					vertexBindings.data(),
-					vertexAttributes.size(),
-					vertexAttributes.data());
-				vk::PipelineInputAssemblyStateCreateInfo assemblyState(
-					{},
-					vk::PrimitiveTopology::eTriangleList,
-					VK_FALSE);
-				vk::PipelineTessellationStateCreateInfo tessellationState;
-
-				vk::Viewport renderViewport(0, 0, pVom.GetSwapchainData().extent.width, pVom.GetSwapchainData().GetExtent().height, 0, 1);
-				vk::Rect2D scissor(0, pVom.GetSwapchainData().GetExtent());
-
-				vk::PipelineViewportStateCreateInfo viewportState(
-					{},
-					1,
-					&renderViewport,
-					1,
-					&scissor);
-				vk::PipelineRasterizationStateCreateInfo rasterizationState(
-					{},
-					VK_FALSE,
-					VK_FALSE,
-					vk::PolygonMode::eFill,
-					vk::CullModeFlagBits::eBack,
-					vk::FrontFace::eCounterClockwise,
-					VK_FALSE,
-					{},
-					{},
-					{},
-					1);
-
-				vk::PipelineMultisampleStateCreateInfo multisampleState(
-					{},
-					vk::SampleCountFlagBits::e1,
-					VK_FALSE,
-					1.0f,
-					nullptr,
-					VK_FALSE,
-					VK_FALSE
-				);
-
-				vk::PipelineDepthStencilStateCreateInfo depthStencilState(
-					{},
-					VK_TRUE,
-					VK_TRUE,
-					vk::CompareOp::eLess,
-					VK_FALSE,
-					VK_FALSE,
-					{},
-					{},
-					0,
-					1.0f
-				);
-
-				gPipelineLayout = pVom.MakePipelineLayout(gPipelineLayoutCreateInfo);
-
-				vk::Format colorFormat = pVom.GetSwapchainData().GetFormat();
-				vk::PipelineRenderingCreateInfo dynamicRenderState(
-					0,
-					1,
-					&colorFormat,
-					depthImage.imageFormat,
-					vk::Format::eUndefined);
-
-				vk::PipelineColorBlendAttachmentState blendAttachment(VK_FALSE, {}, {}, {}, {}, {}, {}, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-				vk::PipelineColorBlendStateCreateInfo colorBlendState({}, VK_FALSE, {}, 1, &blendAttachment);
-
-				vk::ClearColorValue clearColorValue;
-				clearColorValue.setFloat32({ 0.0f,0.0f,0.0f,1.0f });
-				vk::ClearValue colorClear;
-				colorClear.setColor(clearColorValue);
-				vk::ClearValue depthClear;
-				depthClear.setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
-				renderpassManager.Dispose();
-				renderpassManager = vkt::RenderPassManager(pVom.GetDevice(), pVom.GetSwapchainData().GetExtent().width, pVom.GetSwapchainData().GetExtent().height);
-				auto colorAttachment = renderpassManager.CreateAttachment(vk::AttachmentDescription({}, pVom.GetSwapchainData().GetFormat(), vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear
-					, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR),
-					vk::ImageLayout::eColorAttachmentOptimal, colorClear, vk::ImageView());
-				auto depthAttachment = renderpassManager.CreateAttachment(vk::AttachmentDescription({}, vk::Format::eD32Sfloat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear
-					, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-					vk::ImageLayout::eDepthStencilAttachmentOptimal, depthClear, depthImage.view);
-				renderpassManager.CreateSubpass(vk::PipelineBindPoint::eGraphics, { colorAttachment }, {}, depthAttachment, { vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eColorAttachmentOutput
-					, vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eColorAttachmentWrite, {})
-					,vk::SubpassDependency(VK_SUBPASS_EXTERNAL, {},
-						vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-						vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests, vk::AccessFlagBits::eNoneKHR,
-						vk::AccessFlagBits::eDepthStencilAttachmentWrite)
-					});
-				renderpassManager.CreateRenderPass();
-				for (auto& image : pVom.GetSwapchainData().GetImages())
-				{
-					colorAttachment->view = image.view;
-					renderpassManager.CreateFramebuffer();
-				}
-
-				vk::GraphicsPipelineCreateInfo gCreateInfo(
-					{},
-					shaders.size(),
-					shaders.data(),
-					&vertexState,
-					&assemblyState,
-					&tessellationState,
-					&viewportState,
-					&rasterizationState,
-					&multisampleState,
-					&depthStencilState,
-					&colorBlendState,
-					{},
-					gPipelineLayout,
-					renderpassManager.renderPass,
-					0,
-					{},
-					{}
-				);
-
-				graphicsPipeline = pVom.MakePipeline({}, gCreateInfo);
-			}
-		};
 		window.AttachResizeAction(BuildPresentationData);
 		window.AttachResizeAction(BuildPresentaionDependentDescrtiptors);
 		window.AttachResizeAction(BuildGraphicsPipeline);
@@ -899,12 +723,12 @@ int main()
 		stateUpdateSet->AttachSector(modelMatrixSector, vk::ShaderStageFlagBits::eCompute);
 		graphicsSet->AttachSector(matrixSector, vk::ShaderStageFlagBits::eVertex);
 		graphicsSet->AttachSector(modelMatrixSector, vk::ShaderStageFlagBits::eVertex);
-		graphicsSet->AddDescriptor(vk::DescriptorType::eCombinedImageSampler, resizeCount, vk::ShaderStageFlagBits::eFragment, &depthImageCopy.layout, &depthImageCopy.view, &depthImageSampler);
 		descriptorManager.Update();
+
+
 		LightData lightData{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(-1.0f,1.0f,1.0f), glm::vec3(1.0f,1.0f,1.0f), 1.0f, 0.1f};
 		vk::PushConstantRange lightRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(lightData));
 		gPipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo({}, 1, &graphicsSet->layout, 1, &lightRange);
-		////BuildGraphicsPipeline(window.window, {}, {});
 		BuildGraphicsPipeline(window.window, 0, 0);
 
 		vkt::ComputePipelineManager stateUpdate(vom, vk::PipelineLayoutCreateInfo({}, 1, &stateUpdateSet->layout, 1, &countRange), "shaders/stateupdate.spv");
@@ -949,14 +773,6 @@ int main()
 				imageIndex = vom.GetDevice().acquireNextImageKHR(pVom.GetSwapchainData().GetSwapchain(), UINT64_MAX, imgAvailable).value;
 				frameOps.Clear(true);
 				frameOps.RamToSector(&camData, camdataSector, sizeof(camData));
-				vk::ImageCopy depthImageCopyOp(
-					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1),
-					{},
-					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1),
-					{},
-					depthImage.extent
-				);
-				//frameOps.ImageToImage(depthImage.image, depthImageCopy.image, depthImage.layout, depthImageCopy.layout, depthImageCopyOp, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1));
 				frameOps.Execute();
 				descriptorManager.Update();
 				cmdManager.Reset();
@@ -1004,7 +820,7 @@ int main()
 					{},
 					{},
 					vk::AttachmentLoadOp::eClear,
-					vk::AttachmentStoreOp::eNone,
+					vk::AttachmentStoreOp::eStore,
 					depthClear
 				);
 				vk::RenderingInfoKHR renderingInfo(

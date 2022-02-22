@@ -399,12 +399,12 @@ namespace vkt
 
 		std::vector<WaitData> Record(vk::CommandBuffer cmd)
 		{
-			vk::ImageMemoryBarrier srcImageTransition(vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eTransferWrite, srcImageLayout, vk::ImageLayout::eTransferSrcOptimal,
+			vk::ImageMemoryBarrier srcImageTransition(vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eTransferRead, srcImageLayout, vk::ImageLayout::eTransferSrcOptimal,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
 			vk::ImageMemoryBarrier dstImageTransition(vk::AccessFlagBits::eNoneKHR, vk::AccessFlagBits::eTransferWrite, dstImageLayout, vk::ImageLayout::eTransferDstOptimal,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, dstImage, subresourceRange);
 
-			vk::ImageMemoryBarrier srcImageDeTransition(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eNoneKHR, vk::ImageLayout::eTransferSrcOptimal, srcImageLayout,
+			vk::ImageMemoryBarrier srcImageDeTransition(vk::AccessFlagBits::eTransferRead, vk::AccessFlagBits::eNoneKHR, vk::ImageLayout::eTransferSrcOptimal, srcImageLayout,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, srcImage, subresourceRange);
 			vk::ImageMemoryBarrier dstImageDeTransition(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eNoneKHR, vk::ImageLayout::eTransferDstOptimal, dstImageLayout,
 				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, dstImage, subresourceRange);
