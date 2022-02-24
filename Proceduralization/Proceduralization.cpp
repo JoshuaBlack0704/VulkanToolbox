@@ -8,9 +8,90 @@
 #define GLM_FORCE_RANDIANS
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <gtc/quaternion.hpp>
+#include <common.hpp>
 #include <VkBootstrap.h>
 #include <spdlog/stopwatch.h>
 #undef MemoryBarrier
+
+class Camera
+{
+public:
+	Camera (glm::mat4 _clip, vkt::VulkanObjectManager& vom, float& fov, glm::vec3 StartingPos = glm::vec3(), glm::vec3 _up = glm::vec3(0,-1,0)) : vom(vom), fov(fov)
+	{
+		translation = glm::translate(glm::mat4(1.0f), StartingPos);
+		rotation = glm::mat4(1.0f);
+		clip = _clip;
+		up = _up;
+	}
+
+	void SetTranslation(glm::vec3 newPos)
+	{
+		translation = glm::translate(glm::mat4(1.0f), -newPos);
+	}
+	void SetRotation(float angleRadians, glm::vec3 axis)
+	{
+		rotation = glm::rotate(glm::quat(), angleRadians, axis);
+	}
+	void Translate(glm::vec3 displacement)
+	{
+		translation = glm::translate(translation, displacement);
+	}
+	void Rotate(float angularDisplacment, glm::vec3 axis)
+	{
+		glm::quat newrotation(cos(angularDisplacment / 2), axis.x * sin(angularDisplacment / 2), axis.y * sin(angularDisplacment / 2), axis.z * sin(angularDisplacment / 2));
+		rotation = newrotation * rotation;
+	}
+	glm::vec3 GetPosition()
+	{
+		return translation * glm::vec4(0, 0, 0, 1);
+	}
+	glm::vec3 GetDirection()
+	{
+		auto x = rotation * glm::vec3(0, 0, 1) * glm::conjugate(rotation);
+		return rotation * glm::vec3(0,0,1) * glm::conjugate(rotation);
+	}
+	glm::mat4 View()
+	{
+		return glm::transpose(glm::mat4(rotation)) * translation;
+	}
+	glm::mat4 Project(float nearPlane = .01, float farPlane = 1000)
+	{
+		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
+		return glm::perspective(fov, aspect, nearPlane, farPlane);
+	}
+	glm::mat4 PVMatrix(bool withClip = true, float nearPlane = .01, float farPlane = 1000)
+	{
+		if (withClip)
+		{
+			return clip * Project(nearPlane, farPlane) * View();
+		}
+		else
+		{
+			return Project(nearPlane, farPlane) * View();
+		}
+	}
+	void SetClip(glm::mat4 newClip)
+	{
+		clip = newClip;
+	}
+	glm::mat4 GetClip()
+	{
+		return clip;
+	}
+	glm::mat4 VCPMatrix(float nearPlane = .01, float farPlane = 1000)
+	{
+		return GetClip() * Project(nearPlane, farPlane) * View();
+	}
+
+private:
+	glm::mat4 translation;
+	glm::quat rotation;
+	glm::mat4 clip;
+	glm::vec3 up;
+	vkt::VulkanObjectManager& vom;
+	float& fov;
+};
 
 class Character
 {
@@ -19,28 +100,18 @@ public:
 		0.0f, -1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.5f, 0.0f,
 		0.0f, 0.0f, 0.5f, 1.0f);
-	glm::mat4 PVmat;
-	glm::mat4 Vmat;
-	glm::mat4 BuildProjection;
-	glm::vec4 pos = glm::vec4(0, 0, -50, 1);
-	glm::vec4 vel = glm::vec4(0, 0, 0, 1.0f);
-	glm::vec4 accel;
-	glm::vec4 center = glm::vec4(0, 0, 1, 1);
-	glm::vec3 rotAxis;
-	glm::mat4 rotMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,0,1));
-	glm::mat4 transMatrix;
-	glm::vec4 target;
 	float& deltaTime;
 	float& timeSpeedFactor;
 	vkt::VulkanObjectManager& vom;
-	float PitchSpeed = 0;
-	float YawSpeed = 0;
+	float pitchAxis = 0;
+	float yawAxis = 0;
+	Camera camera;
+	float fov = 70;
+	glm::vec3 accel = {0,0,1};
+	glm::vec3 vel;
 
-
-	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor)
+	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor), camera(clip, _vom, fov)
 	{
-
-		pos = glm::vec4(0, 0, -50, 1);
 
 		wKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_W), GLFW_PRESS, [&]() {accel[2] = 1; spdlog::info("Moving ship forward"); });
 		wKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_W), GLFW_RELEASE, [&]() {accel[2] = 0;  vel[2] = 0; spdlog::info("Stopping ship"); });
@@ -60,17 +131,17 @@ public:
 		ctrlKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_PRESS, [&]() {accel[1] = 1; spdlog::info("Moving ship down"); });
 		ctrlKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_RELEASE, [&]() {accel[1] = 0;  vel[1] = 0; spdlog::info("Stopping ship"); });
 
-		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {   PitchSpeed = 90; spdlog::info("Rotating ship up"); });
-		upKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {  PitchSpeed = 0;  spdlog::info("Stopping ship"); });
+		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {   pitchAxis = 1; spdlog::info("Rotating ship up"); });
+		upKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {  pitchAxis = 0;  spdlog::info("Stopping ship"); });
 
-		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { PitchSpeed = -90; spdlog::info("Rotating ship down"); });
-		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { PitchSpeed = 0; spdlog::info("Stopping ship"); });
+		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { pitchAxis = -1; spdlog::info("Rotating ship down"); });
+		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { pitchAxis = 0; spdlog::info("Stopping ship"); });
 
-		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { YawSpeed = -90; spdlog::info("Rotating ship left"); });
-		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { YawSpeed = 0; spdlog::info("Stopping ship"); });
+		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { yawAxis = -1; spdlog::info("Rotating ship left"); });
+		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { yawAxis = 0; spdlog::info("Stopping ship"); });
 
-		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() { YawSpeed = 90; spdlog::info("Rotating ship right"); });
-		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() { YawSpeed = 0; spdlog::info("Stopping ship"); });
+		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() { yawAxis = 1; spdlog::info("Rotating ship right"); });
+		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() { yawAxis = 0; spdlog::info("Stopping ship"); });
 
 		backspaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_BACKSPACE), GLFW_PRESS, [&]() {deltaTime *= -1; spdlog::info("Reversing time"); });
 		spaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_SPACE), GLFW_PRESS, [&]()
@@ -103,56 +174,20 @@ public:
 
 	}
 
-	/*Character* Move()
+	Character* Move()
 	{
-		if (rotAxis != glm::vec3(0))
+		return Move(deltaTime);
+	}
+	Character* Move(float deltaTime)
+	{
+		vel += accel * deltaTime;
+		if (pitchAxis != 0 || yawAxis != 0)
 		{
-			rotMatrix = glm::rotate(rotMatrix, glm::radians(90 * static_cast<float>(deltaTime)), (rotAxis));
-			center = rotMatrix * glm::vec4(0, 0, 1, 1);
+			camera.Rotate(glm::radians(90.0f) * deltaTime, glm::vec3(pitchAxis, yawAxis, 0));
 		}
-
-
-		vel += accel;
-		pos += rotMatrix * vel * glm::vec4(deltaTime, deltaTime, deltaTime, 1);
-
+		glm::vec3 displacement = camera.GetDirection() * vel * glm::vec3(deltaTime, deltaTime, deltaTime);
+		camera.Translate(displacement);
 		return this;
-	}*/
-	Character* Move(double _externalDeltaTime)
-	{
-		if (PitchSpeed != 0 || YawSpeed != 0)
-		{
-			auto axis = glm::vec3(PitchSpeed, -YawSpeed, 0);
-			rotMatrix = glm::rotate(rotMatrix, glm::radians(90.0f*(float)_externalDeltaTime), axis);
-		}
-		
-		vel += accel;
-		pos += rotMatrix * vel * glm::vec4(_externalDeltaTime, _externalDeltaTime, _externalDeltaTime, 1);
-
-		return this;
-	}
-	glm::mat4 GetPMat()
-	{
-		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
-		return glm::perspective(glm::radians(70.0f), aspect, .1f, 1000.0f);
-	}
-	glm::mat4 GetOMat()
-	{
-		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
-		return glm::ortho(0, 1920, 0, 1080);
-	}
-	glm::mat4 GetVMat()
-	{
-		return glm::transpose(rotMatrix) * glm::translate(glm::mat4(1.0f), glm::vec3(pos));
-		return glm::lookAt(static_cast<glm::vec3>(pos), static_cast<glm::vec3>(pos + center), glm::vec3(0, -1, 0));
-	}
-	glm::mat4 GetClipMat()
-	{
-		return clip;
-	};
-	glm::mat4 GetPVMat()
-	{
-		float aspect = static_cast<float>(vom.GetSwapchainData().GetExtent().width) / static_cast<float>(vom.GetSwapchainData().GetExtent().height);
-		return clip * glm::perspective(glm::radians(70.0f), aspect, .1f, 1000.0f) * glm::lookAt(static_cast<glm::vec3>(pos), static_cast<glm::vec3>(pos + center), glm::vec3(0, -1, 0));
 	}
 
 private:
@@ -327,6 +362,7 @@ struct CamData
 	alignas(16)glm::mat4 clipMatrix;
 	alignas(16)glm::mat4 projectionMatrix;
 	alignas(16)glm::mat4 viewMatrix;
+	alignas(16)glm::mat4 VPCMatrix;
 	alignas(16)glm::vec3 pos;
 };
 struct LightData
@@ -769,7 +805,7 @@ int main()
 			if (!glfwGetWindowAttrib(window.window, GLFW_ICONIFIED))
 			{
 				character.Move(countData.deltaTime/timeSpeedFactor);
-				CamData camData{ character.GetClipMat(), character.GetPMat(), character.GetVMat(), glm::vec3(character.pos)};
+				CamData camData{character.camera.GetClip(), character.camera.Project(), character.camera.View(), character.camera.VCPMatrix(), character.camera.GetPosition()};
 				imageIndex = vom.GetDevice().acquireNextImageKHR(pVom.GetSwapchainData().GetSwapchain(), UINT64_MAX, imgAvailable).value;
 				frameOps.Clear(true);
 				frameOps.RamToSector(&camData, camdataSector, sizeof(camData));

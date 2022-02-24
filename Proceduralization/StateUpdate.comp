@@ -144,6 +144,7 @@ struct CamData
     mat4 clipMatrix;
     mat4 projectionMatrix;
     mat4 viewMatrix;
+    mat4 VPCMatrix;
     vec3 pos;
 };
 
