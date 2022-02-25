@@ -14,15 +14,83 @@
 #include <spdlog/stopwatch.h>
 #undef MemoryBarrier
 
+class Quaternion
+{
+public:
+	Quaternion()
+	{
+		w = 1; x = 0; y = 0, z = 0;
+	}
+	Quaternion(float angle, glm::vec3 axis)
+		:w(cos(angle/2)), x(glm::normalize(axis).x*sin(angle/2)), y(glm::normalize(axis).y*sin(angle/2)), z(glm::normalize(axis).z*sin(angle/2)){}
+
+	/// <summary>
+	/// Qthis * Qthat
+	/// </summary>
+	/// <param name="multiplier">This will be q2 in a quat multiply</param>
+	/// <returns>qthis*qthat</returns>
+	Quaternion operator*(Quaternion q)
+	{
+		Quaternion product;
+		product.w = (w * q.w - x * q.x - y * q.y - z * q.z);
+		product.x = (w * q.x + x * q.w + y * q.z - z * q.y);
+		product.y = (w * q.y - x * q.z + y * q.w + z * q.x);
+		product.z = (w * q.z + x * q.y - y * q.x + z * q.w);
+		return product;
+	}
+
+	Quaternion Rotate(float angle, glm::vec3 axis)
+	{
+		Quaternion local(angle, axis);
+		return local * *this;
+	}
+
+	glm::mat4 GetRotationMatrix()
+	{
+		/*auto ret = glm::mat4(
+			1 - 2 * pow(y, 2) - 2 * pow(z, 2), 2 * x * y - 2 * w * z, 2 * x * z + 2 * w * y, 0,
+
+			2 * x * y + 2 * w * z, 1 - 2 * pow(x, 2) - 2 * pow(z, 2), 2 * y * z + 2 * w * z, 0,
+
+			2 * x * z - 2 * w * y, 2 * y * z - 2 * w * x, 1 - 2 * pow(x, 2) - 2 * pow(y, 2), 0,
+
+			0, 0, 0, 1);
+		return ret;*/
+
+		auto q = *this;
+
+		glm::mat4 rotMat;
+		rotMat[0] = glm::vec4((1 - 2 * pow(q.y, 2) - 2 * pow(q.z, 2)),
+			2 * q.x * q.y + 2 * q.w * q.z,
+			2 * q.x * q.z - 2 * q.w * q.y,
+			0.0f);
+		rotMat[1] = glm::vec4(2 * q.x * q.y - 2 * q.w * q.z,
+			(1 - 2 * pow(q.x, 2) - 2 * pow(q.z, 2)),
+			2 * q.y * q.z + q.w * q.x,
+			0.0f);
+		rotMat[2] = glm::vec4(2 * q.x * q.z + 2 * q.w * q.y,
+			2 * q.y * q.z - 2 * q.w * q.x,
+			1 - 2 * pow(q.x, 2) - 2 * pow(q.y, 2),
+			0.0f);
+		rotMat[3] = glm::vec4(0, 0, 0, 1);
+		return rotMat;
+	}
+
+	float w, x, y, z;
+
+private:
+};
+
 class Camera
 {
 public:
 	Camera (glm::mat4 _clip, vkt::VulkanObjectManager& vom, float& fov, glm::vec3 StartingPos = glm::vec3(), glm::vec3 _up = glm::vec3(0,-1,0)) : vom(vom), fov(fov)
 	{
 		translation = glm::translate(glm::mat4(1.0f), StartingPos);
-		rotation = glm::mat4(1.0f);
 		clip = _clip;
 		up = _up;
+		Rotate(glm::radians(180.0f), glm::vec3(0, 0, 1));
+		Rotate(glm::radians(180.0f), glm::vec3(0, 1, 0));
 	}
 
 	void SetTranslation(glm::vec3 newPos)
@@ -31,7 +99,7 @@ public:
 	}
 	void SetRotation(float angleRadians, glm::vec3 axis)
 	{
-		rotation = glm::rotate(glm::quat(), angleRadians, axis);
+		rotation = Quaternion(angleRadians, axis);
 	}
 	void Translate(glm::vec3 displacement)
 	{
@@ -39,21 +107,19 @@ public:
 	}
 	void Rotate(float angularDisplacment, glm::vec3 axis)
 	{
-		glm::quat newrotation(cos(angularDisplacment / 2), axis.x * sin(angularDisplacment / 2), axis.y * sin(angularDisplacment / 2), axis.z * sin(angularDisplacment / 2));
-		rotation = newrotation * rotation;
+		rotation = rotation.Rotate(angularDisplacment, axis);
 	}
 	glm::vec3 GetPosition()
 	{
 		return translation * glm::vec4(0, 0, 0, 1);
 	}
-	glm::vec3 GetDirection()
+	glm::mat4 GetRotationMatrix()
 	{
-		auto x = rotation * glm::vec3(0, 0, 1) * glm::conjugate(rotation);
-		return rotation * glm::vec3(0,0,1) * glm::conjugate(rotation);
+		return rotation.GetRotationMatrix();
 	}
 	glm::mat4 View()
 	{
-		return glm::transpose(glm::mat4(rotation)) * translation;
+		return glm::transpose(rotation.GetRotationMatrix()) * translation;
 	}
 	glm::mat4 Project(float nearPlane = .01, float farPlane = 1000)
 	{
@@ -64,7 +130,7 @@ public:
 	{
 		if (withClip)
 		{
-			return clip * Project(nearPlane, farPlane) * View();
+			return GetClip() * Project(nearPlane, farPlane) * View();
 		}
 		else
 		{
@@ -79,14 +145,10 @@ public:
 	{
 		return clip;
 	}
-	glm::mat4 VCPMatrix(float nearPlane = .01, float farPlane = 1000)
-	{
-		return GetClip() * Project(nearPlane, farPlane) * View();
-	}
 
 private:
+	Quaternion rotation;
 	glm::mat4 translation;
-	glm::quat rotation;
 	glm::mat4 clip;
 	glm::vec3 up;
 	vkt::VulkanObjectManager& vom;
@@ -107,7 +169,7 @@ public:
 	float yawAxis = 0;
 	Camera camera;
 	float fov = 70;
-	glm::vec3 accel = {0,0,1};
+	glm::vec3 accel;
 	glm::vec3 vel;
 
 	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor), camera(clip, _vom, fov)
@@ -119,10 +181,10 @@ public:
 		sKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_S), GLFW_PRESS, [&]() {accel[2] = -1; spdlog::info("Moving ship back"); });
 		sKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_S), GLFW_RELEASE, [&]() {accel[2] = 0;  vel[2] = 0; spdlog::info("Stopping ship"); });
 
-		aKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_A), GLFW_PRESS, [&]() {accel[0] = -1; spdlog::info("Moving ship left"); });
+		aKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_A), GLFW_PRESS, [&]() {accel[0] = 1; spdlog::info("Moving ship left"); });
 		aKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_A), GLFW_RELEASE, [&]() {accel[0] = 0;  vel[0] = 0; spdlog::info("Stopping ship"); });
 
-		dKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_D), GLFW_PRESS, [&]() {accel[0] = 1; spdlog::info("Moving ship right"); });
+		dKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_D), GLFW_PRESS, [&]() {accel[0] = -1; spdlog::info("Moving ship right"); });
 		dKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_D), GLFW_RELEASE, [&]() {accel[0] = 0;  vel[0] = 0; spdlog::info("Stopping ship"); });
 
 		shiftKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_SHIFT), GLFW_PRESS, [&]() {accel[1] = -1; spdlog::info("Moving ship up"); });
@@ -131,16 +193,16 @@ public:
 		ctrlKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_PRESS, [&]() {accel[1] = 1; spdlog::info("Moving ship down"); });
 		ctrlKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT_CONTROL), GLFW_RELEASE, [&]() {accel[1] = 0;  vel[1] = 0; spdlog::info("Stopping ship"); });
 
-		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {   pitchAxis = 1; spdlog::info("Rotating ship up"); });
+		upKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_PRESS, [&]() {   pitchAxis = -1; spdlog::info("Rotating ship up"); });
 		upKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_UP), GLFW_RELEASE, [&]() {  pitchAxis = 0;  spdlog::info("Stopping ship"); });
 
-		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { pitchAxis = -1; spdlog::info("Rotating ship down"); });
+		downKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_PRESS, [&]() { pitchAxis = 1; spdlog::info("Rotating ship down"); });
 		downKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_DOWN), GLFW_RELEASE, [&]() { pitchAxis = 0; spdlog::info("Stopping ship"); });
 
-		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { yawAxis = -1; spdlog::info("Rotating ship left"); });
+		leftKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_PRESS, [&]() { yawAxis = 1; spdlog::info("Rotating ship left"); });
 		leftKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_LEFT), GLFW_RELEASE, [&]() { yawAxis = 0; spdlog::info("Stopping ship"); });
 
-		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() { yawAxis = 1; spdlog::info("Rotating ship right"); });
+		rightKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_PRESS, [&]() { yawAxis = -1; spdlog::info("Rotating ship right"); });
 		rightKeyStop = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_RIGHT), GLFW_RELEASE, [&]() { yawAxis = 0; spdlog::info("Stopping ship"); });
 
 		backspaceKey = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_BACKSPACE), GLFW_PRESS, [&]() {deltaTime *= -1; spdlog::info("Reversing time"); });
@@ -180,12 +242,20 @@ public:
 	}
 	Character* Move(float deltaTime)
 	{
-		vel += accel * deltaTime;
-		if (pitchAxis != 0 || yawAxis != 0)
+		vel += accel;
+		//When we rotate, the cameras local xaxis is no longer perpendicular the the global z
+		if (pitchAxis != 0)
 		{
-			camera.Rotate(glm::radians(90.0f) * deltaTime, glm::vec3(pitchAxis, yawAxis, 0));
+			glm::vec4 dir = camera.GetRotationMatrix() * glm::vec4(0, 0, 1, 0);
+			auto perp = glm::cross(glm::vec3(dir), glm::vec3(0, -1, 0));
+			perp = glm::normalize(perp);
+			camera.Rotate(glm::radians(90.0f) * deltaTime * pitchAxis, perp);
 		}
-		glm::vec3 displacement = camera.GetDirection() * vel * glm::vec3(deltaTime, deltaTime, deltaTime);
+		if (yawAxis != 0)
+		{
+			camera.Rotate(glm::radians(90.0f) * deltaTime * yawAxis, glm::vec3(0, -1, 0));
+		}
+		glm::vec3 displacement = glm::mat3(camera.GetRotationMatrix()) * vel * glm::vec3(deltaTime, deltaTime, deltaTime);
 		camera.Translate(displacement);
 		return this;
 	}
@@ -805,7 +875,7 @@ int main()
 			if (!glfwGetWindowAttrib(window.window, GLFW_ICONIFIED))
 			{
 				character.Move(countData.deltaTime/timeSpeedFactor);
-				CamData camData{character.camera.GetClip(), character.camera.Project(), character.camera.View(), character.camera.VCPMatrix(), character.camera.GetPosition()};
+				CamData camData{character.camera.GetClip(), character.camera.Project(), character.camera.View(), character.camera.PVMatrix(), character.camera.GetPosition()};
 				imageIndex = vom.GetDevice().acquireNextImageKHR(pVom.GetSwapchainData().GetSwapchain(), UINT64_MAX, imgAvailable).value;
 				frameOps.Clear(true);
 				frameOps.RamToSector(&camData, camdataSector, sizeof(camData));
@@ -846,7 +916,7 @@ int main()
 					{},
 					{},
 					{},
-					vk::AttachmentLoadOp::eLoad,
+					vk::AttachmentLoadOp::eClear,
 					vk::AttachmentStoreOp::eStore,
 					colorClear);
 				vk::RenderingAttachmentInfoKHR depthAttachment(
@@ -856,7 +926,7 @@ int main()
 					{},
 					{},
 					vk::AttachmentLoadOp::eClear,
-					vk::AttachmentStoreOp::eStore,
+					vk::AttachmentStoreOp::eNone,
 					depthClear
 				);
 				vk::RenderingInfoKHR renderingInfo(

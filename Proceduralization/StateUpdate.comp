@@ -146,6 +146,7 @@ struct CamData
     mat4 viewMatrix;
     mat4 VPCMatrix;
     vec3 pos;
+
 };
 
 struct VkDrawIndirectCommand {
