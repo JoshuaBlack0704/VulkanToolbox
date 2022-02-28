@@ -208,6 +208,7 @@
     <ClCompile Include="include\Internal\ObjectManager.cpp" />
     <ClCompile Include="include\Internal\PipelineManagers.cpp" />
     <ClCompile Include="include\Internal\RenderpassManager.cpp" />
+    <ClCompile Include="include\Internal\VulkanWindow.cpp" />
     <ClCompile Include="VulkanToolbox.cpp" />
   </ItemGroup>
   <ItemGroup>

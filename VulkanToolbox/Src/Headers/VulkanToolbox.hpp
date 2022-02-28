@@ -12,11 +12,11 @@
 #include <taskflow/taskflow.hpp>
 
 #undef MemoryBarrier
-#include "Internal/ObjectManager.hpp"
-#include "Internal/CommandManager.hpp"
-#include "Internal/MemoryManager.hpp"
-#include "Internal/DescriptorManager.hpp"
-#include "Internal/RenderpassManager.hpp"
-#include "Internal/PipelineManagers.hpp"
-#include "Internal/VulkanWindow.hpp"
+#include "ObjectManager.hpp"
+#include "CommandManager.hpp"
+#include "MemoryManager.hpp"
+#include "DescriptorManager.hpp"
+#include "RenderpassManager.hpp"
+#include "PipelineManagers.hpp"
+#include "VulkanWindow.hpp"
 #define MemoryBarrier __faststorefence
