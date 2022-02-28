@@ -84,7 +84,7 @@ private:
 class Camera
 {
 public:
-	Camera (glm::mat4 _clip, vkt::VulkanObjectManager& vom, float& fov, glm::vec3 StartingPos = glm::vec3(), glm::vec3 _up = glm::vec3(0,-1,0)) : vom(vom), fov(fov)
+	Camera (glm::mat4 _clip, vkt::ObjectManager& vom, float& fov, glm::vec3 StartingPos = glm::vec3(), glm::vec3 _up = glm::vec3(0,-1,0)) : vom(vom), fov(fov)
 	{
 		translation = glm::translate(glm::mat4(1.0f), StartingPos);
 		clip = _clip;
@@ -151,7 +151,7 @@ private:
 	glm::mat4 translation;
 	glm::mat4 clip;
 	glm::vec3 up;
-	vkt::VulkanObjectManager& vom;
+	vkt::ObjectManager& vom;
 	float& fov;
 };
 
@@ -164,7 +164,7 @@ public:
 		0.0f, 0.0f, 0.5f, 1.0f);
 	float& deltaTime;
 	float& timeSpeedFactor;
-	vkt::VulkanObjectManager& vom;
+	vkt::ObjectManager& vom;
 	float pitchAxis = 0;
 	float yawAxis = 0;
 	Camera camera;
@@ -172,7 +172,7 @@ public:
 	glm::vec3 accel;
 	glm::vec3 vel;
 
-	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor), camera(clip, _vom, fov)
+	Character(vkt::VulkanWindow& window, vkt::ObjectManager& _vom, float& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor), camera(clip, _vom, fov)
 	{
 
 		wKeyMap = window.AddKeyMap(glfwGetKeyScancode(GLFW_KEY_W), GLFW_PRESS, [&]() {accel[2] = 1; spdlog::info("Moving ship forward"); });
@@ -475,7 +475,7 @@ int main()
 	std::cin >> maxDimension;
 #endif
 
-	vkt::VulkanObjectManager vom({}, false, true);
+	vkt::ObjectManager vom({}, false, true);
 	uint32_t width = 500;
 	uint32_t height = 500;
 	vkt::VulkanWindow window(width, height);
@@ -581,7 +581,7 @@ int main()
 		vk::PushConstantRange countRange(vk::ShaderStageFlagBits::eCompute, 0, sizeof(CountData));
 		CountData countData{ objectCount, staticCount, maxDimension };
 		countData.vertexCount = objectData.vertices.size();
-		vkt::VulkanObjectManager pVom(vom);
+		vkt::ObjectManager pVom(vom);
 		pVom.SetSurface(vom.GetSurface());
 		pVom.SetPhysicalDevice(vom.GetPhysicalDevice());
 		pVom.SetAllocator(vom.GetAllocator());

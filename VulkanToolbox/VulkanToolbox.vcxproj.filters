@@ -21,6 +21,24 @@
     <ClCompile Include="..\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\Internal\CommandManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Internal\DescriptorManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Internal\MemoryManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Internal\ObjectManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Internal\PipelineManagers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Internal\RenderpassManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="AddBufferValues.comp" />
@@ -32,22 +50,22 @@
     <None Include="StateUpdate.comp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Internal\VulkanCommandManager.hpp">
+    <ClInclude Include="include\Internal\CommandManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Internal\VulkanDescriptorManager.hpp">
+    <ClInclude Include="include\Internal\DescriptorManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Internal\VulkanMemoryManager.hpp">
+    <ClInclude Include="include\Internal\MemoryManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Internal\VulkanObjectManager.hpp">
+    <ClInclude Include="include\Internal\ObjectManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Internal\VulkanPipelineManagers.hpp">
+    <ClInclude Include="include\Internal\PipelineManagers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Internal\VulkanRenderpassManager.hpp">
+    <ClInclude Include="include\Internal\RenderpassManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Internal\VulkanWindow.hpp">

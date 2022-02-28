@@ -202,6 +202,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\AutoRepos\vk-bootstrap\src\VkBootstrap.cpp" />
+    <ClCompile Include="include\Internal\CommandManager.cpp" />
+    <ClCompile Include="include\Internal\DescriptorManager.cpp" />
+    <ClCompile Include="include\Internal\MemoryManager.cpp" />
+    <ClCompile Include="include\Internal\ObjectManager.cpp" />
+    <ClCompile Include="include\Internal\PipelineManagers.cpp" />
+    <ClCompile Include="include\Internal\RenderpassManager.cpp" />
     <ClCompile Include="VulkanToolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -212,12 +218,12 @@
     <None Include="StateUpdate.comp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Internal\VulkanCommandManager.hpp" />
-    <ClInclude Include="include\Internal\VulkanDescriptorManager.hpp" />
-    <ClInclude Include="include\Internal\VulkanMemoryManager.hpp" />
-    <ClInclude Include="include\Internal\VulkanObjectManager.hpp" />
-    <ClInclude Include="include\Internal\VulkanPipelineManagers.hpp" />
-    <ClInclude Include="include\Internal\VulkanRenderpassManager.hpp" />
+    <ClInclude Include="include\Internal\CommandManager.hpp" />
+    <ClInclude Include="include\Internal\DescriptorManager.hpp" />
+    <ClInclude Include="include\Internal\MemoryManager.hpp" />
+    <ClInclude Include="include\Internal\ObjectManager.hpp" />
+    <ClInclude Include="include\Internal\PipelineManagers.hpp" />
+    <ClInclude Include="include\Internal\RenderpassManager.hpp" />
     <ClInclude Include="include\Internal\VulkanWindow.hpp" />
     <ClInclude Include="include\VulkanToolbox.hpp" />
   </ItemGroup>

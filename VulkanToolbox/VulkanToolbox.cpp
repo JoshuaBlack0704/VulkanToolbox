@@ -31,9 +31,9 @@ public:
 	glm::vec4 target;
 	double& deltaTime;
 	float& timeSpeedFactor;
-	vkt::VulkanObjectManager& vom;
+	vkt::ObjectManager& vom;
 
-	Character(vkt::VulkanWindow& window, vkt::VulkanObjectManager& _vom, double& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor)
+	Character(vkt::VulkanWindow& window, vkt::ObjectManager& _vom, double& _deltaTime, float& _timeSpeedFactor) : deltaTime(_deltaTime), vom(_vom), timeSpeedFactor(_timeSpeedFactor)
 	{
 
 		pos = glm::vec4(0, 0, -50, 1);
@@ -314,7 +314,7 @@ struct Velocity
 	alignas(4)float speed;
 };
 
-std::unique_ptr < vkt::GraphicsPipelineManager > CreatePresentation(vkt::VulkanObjectManager& _vom, vkb::Device& bootLDevice, vkt::RenderPassManager& renderpassManager, std::shared_ptr<vkt::DescriptorSetData> graphiscDescSet, std::vector<vk::PushConstantRange> pushConstantRanges)
+std::unique_ptr < vkt::GraphicsPipelineManager > CreatePresentation(vkt::ObjectManager& _vom, vkb::Device& bootLDevice, vkt::RenderPassManager& renderpassManager, std::shared_ptr<vkt::DescriptorSetData> graphiscDescSet, std::vector<vk::PushConstantRange> pushConstantRanges)
 {
 	vkb::SwapchainBuilder swapchainBuilder{ bootLDevice };
 	auto swapchainRet = swapchainBuilder.set_old_swapchain(_vom.GetSwapchainData(true).GetSwapchain()).build();
@@ -448,7 +448,7 @@ int main()
 		throw std::logic_error(" ");
 	}
 	bootDevice = lDeviceRet.value();
-	vkt::VulkanObjectManager vom(bootDevice.device);
+	vkt::ObjectManager vom(bootDevice.device);
 	vom.SetInstance(bootInstanceReturn.value().instance);
 	vom.Manage(bootInstanceReturn.value().instance);
 	vom.SetSurface(window.surface);
