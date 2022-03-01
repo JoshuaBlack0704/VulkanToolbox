@@ -1,5 +1,2 @@
 .vs/
-ipch/
-AutoRepos/
-glfw/
-Intermediates/
+build/

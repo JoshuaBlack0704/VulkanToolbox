@@ -1,0 +1,15 @@
+[submodule "GlobalExternalLibraries/spdlog"]
+	path = GlobalExternalLibraries/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "GlobalExternalLibraries/vk-bootstrap"]
+	path = GlobalExternalLibraries/vk-bootstrap
+	url = https://github.com/charles-lunarg/vk-bootstrap.git
+[submodule "GlobalExternalLibraries/VulkanMemoryAllocator"]
+	path = GlobalExternalLibraries/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "GlobalExternalLibraries/glfw"]
+	path = GlobalExternalLibraries/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "GlobalExternalLibraries/glm"]
+	path = GlobalExternalLibraries/glm
+	url = https://github.com/g-truc/glm.git

@@ -1,0 +1,6 @@
+add_subdirectory(glfw)
+add_subdirectory(spdlog)
+add_subdirectory(vk-bootstrap)
+add_subdirectory(VulkanMemoryAllocator)
+add_subdirectory(glm)
+include_directories(glfw/include)
