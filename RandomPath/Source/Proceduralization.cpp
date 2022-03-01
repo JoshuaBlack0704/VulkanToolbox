@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 #define VMA_IMPLEMENTATION
+#include <spdlog/spdlog.h>
 #include <VulkanToolbox.hpp>
 #define GLM_FORCE_RANDIANS
 #include <glm/glm.hpp>
