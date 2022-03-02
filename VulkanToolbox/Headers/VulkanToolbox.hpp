@@ -2,7 +2,8 @@
 
 #include <memory>
 
-#include <vulkan\vulkan.hpp>
+#include <Headers/VulkanIncludeInfo.hpp>
+#include Path_To_Vulkan_Headers
 #include <deque>
 
 #include <vk_mem_alloc.h>

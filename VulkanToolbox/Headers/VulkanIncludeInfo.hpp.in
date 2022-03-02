@@ -1,0 +1,1 @@
+#define Path_To_Vulkan_Headers "@Vulkan_INCLUDE_DIR@/vulkan/vulkan.hpp"
