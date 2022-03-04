@@ -1,14 +1,12 @@
 #pragma once
 
 #include <memory>
-
-#include <Headers/VulkanIncludeInfo.hpp>
-#include Path_To_Vulkan_Headers
 #include <deque>
-
+#include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 
 
 #undef MemoryBarrier
