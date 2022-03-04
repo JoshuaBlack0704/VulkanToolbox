@@ -1,6 +1,10 @@
 file(GLOB src "Source/*.cpp")
 file(GLOB head "Headers/*.hpp")
+file(GLOB objectManager "Headers/^Object")
+
 add_library(Tools STATIC ${src} ${head})
+source_group("ObjectManager" FILES ${objectManager})
+
 if(MSVC)
     target_compile_options(Tools PRIVATE /MP)
 endif()
