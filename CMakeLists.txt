@@ -9,12 +9,10 @@ option(VULKANTOOLBOX_BUILD_TESTS "Build the Tests" ON)
 
 add_subdirectory(GlobalExternalLibraries)
 add_subdirectory(GlobalInternalLibraries)
-add_subdirectory(VulkanToolbox)
+add_subdirectory(Src)
 
 if(VULKANTOOLBOX_BUILD_TESTS)
-add_subdirectory(RandomPath)
-add_subdirectory(ShadowCaster)
-add_subdirectory(ShadowCaster2)
+add_subdirectory(Tests)
 endif()
 
 
